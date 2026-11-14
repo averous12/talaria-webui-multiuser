@@ -163,6 +163,7 @@ def create_app(
             Route("/api/push/subscribe", push.subscribe, methods=["POST"]),
             Route("/api/push/unsubscribe", push.unsubscribe, methods=["POST"]),
             Route("/push-sw.js", push.service_worker),
+            Route("/static/push-sw.js", push.service_worker),
             Route("/api/search", session_views.view),
             Route("/api/activity", session_views.view),
             Route("/api/sessions/{session_id}/around", session_views.view),
