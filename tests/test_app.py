@@ -117,6 +117,15 @@ def test_admin_budget_percentages_and_new_run_block(live_app):
         assert "frame-ancestors 'none'" in client.get("/").headers["Content-Security-Policy"]
 
 
+def test_push_service_worker_is_valid_javascript(live_app):
+    url, _, _ = live_app
+    response = httpx.get(url + "/push-sw.js")
+    assert response.status_code == 200
+    script = response.text
+    assert "\\\\n" not in script
+    assert "self.registration.showNotification" in script
+
+
 def test_session_lifecycle(live_app):
     with signed_in(live_app[0]) as client:
         created = client.post("/api/sessions", json={"title": "A thought"})

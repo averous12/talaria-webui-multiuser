@@ -50,8 +50,8 @@ import { MessageAction } from "./message-actions.js";
 import { sessionModel, sessionReasoning } from "./models.js";
 import { restoreRuns } from "./runs.js";
 import { observePage } from "./page-lifecycle.js";
-import { notificationPermission, showNotificationForTransition } from "./notifications.js";
-import { enableBackgroundNotifications, backgroundNotificationStatus } from "./push.js";
+import { showNotificationForTransition } from "./notifications.js";
+import { backgroundNotificationStatus } from "./push.js";
 import { Startup } from "./startup.js";
 import { LanguageSelector } from "./language.js";
 import { t, useLanguage } from "./i18n.js";
@@ -223,10 +223,8 @@ function App() {
     }
   }, [app.connected, demo]);
   useEffect(() => {
-    if (!app.connected || demo || notificationPermission() !== "granted") return;
-    backgroundNotificationStatus().then((status) => {
-      if (status === "default") enableBackgroundNotifications().catch(() => {});
-    });
+    if (!app.connected || demo) return;
+    backgroundNotificationStatus().catch(() => {});
   }, [app.connected, demo]);
   useEffect(() => {
     const runs = app.lives || {};

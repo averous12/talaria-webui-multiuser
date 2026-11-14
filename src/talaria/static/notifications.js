@@ -6,9 +6,23 @@ export function setNotificationBrand(name) {
   productName = typeof name === "string" && name.trim() ? name.trim() : "Talaria";
 }
 
+export async function showBackgroundNotification(notice) {
+  if (!("serviceWorker" in navigator)) return false;
+  const registration = await navigator.serviceWorker.getRegistration();
+  if (!registration) return false;
+  await registration.showNotification(notice.title, {
+    body: notice.body,
+    tag: notice.tag,
+    renotify: true,
+    data: { url: notice.url || location.href },
+  });
+  return true;
+}
+
 function appBrandName() {
   return productName;
 }
+
 
 const completed = "completed";
 const waiting = "waiting_for_input";
@@ -56,7 +70,7 @@ export async function requestNotificationPermission() {
   return Notification.requestPermission();
 }
 
-export function showNotificationForTransition(
+export async function showNotificationForTransition(
   sid,
   previous,
   next,
@@ -67,6 +81,13 @@ export function showNotificationForTransition(
   if (focused || !notice || notificationPermission() !== "granted" || notified.has(notice.tag))
     return false;
   notified.add(notice.tag);
+  try {
+    const shown = await showBackgroundNotification(notice);
+    if (shown) return true;
+  } catch {
+    // Fall through to the desktop-only constructor when available.
+  }
+  if (typeof Notification !== "function") return false;
   const item = new Notification(notice.title, { body: notice.body, tag: notice.tag });
   item.onclick = () => {
     window.focus();

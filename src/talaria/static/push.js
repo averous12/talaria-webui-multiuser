@@ -12,9 +12,11 @@ export async function backgroundNotificationStatus() {
 
 export async function enableBackgroundNotifications() {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return "unsupported";
-  const registration = await navigator.serviceWorker.register(`${location.origin}${new URL("push-sw.js", location.href).pathname}`, {
+  const workerUrl = new URL("../push-sw.js", import.meta.url).pathname;
+  const registration = await navigator.serviceWorker.register(workerUrl, {
     scope: new URL("./", location.href).pathname,
   });
+  await navigator.serviceWorker.ready;
   const { public_key: publicKey } = await api("/push/config");
   let subscription = await registration.pushManager.getSubscription();
   if (!subscription) {

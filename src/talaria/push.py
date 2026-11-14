@@ -200,7 +200,7 @@ def service_worker(request: Request):
         "  let data = {};\n"
         "  try { data = event.data ? event.data.json() : {}; } catch (_) {}\n"
         "  const title = data.kind === 'clarification' ? 'Your agent needs input' : "
-        "'Response complete';\\n"
+        "'Response complete';\n"
         "  const body = data.kind === 'clarification' ? (data.question || "
         "'Your agent is waiting for your answer.') : 'Your response is ready.';\n"
         "  event.waitUntil(self.registration.showNotification(title, { body, data: { url: '"
