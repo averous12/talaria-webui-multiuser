@@ -147,6 +147,9 @@ def create_app(
             Route("/api/connection/test", routes.connection, methods=["POST"]),
             Route("/api/capabilities", routes.capabilities),
             Route("/api/models", routes.model_options),
+            Route("/api/kenari/budget", routes.kenari_budget, methods=["GET"]),
+            Route("/api/kenari/pricing", routes.kenari_budget, methods=["GET"]),
+            Route("/api/kenari/estimate", routes.kenari_budget, methods=["POST"]),
             Route("/api/commands", session_commands.commands, methods=["GET", "POST"]),
             Route(
                 "/api/commands/{command_id}", session_commands.command, methods=["GET", "DELETE"]

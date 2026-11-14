@@ -103,6 +103,46 @@ function Overview({ app }) {
   </div>`;
 }
 
+function KenariBudget() {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+    Promise.all([api("/kenari/budget"), api("/kenari/pricing")])
+      .then(([budget, pricing]) => active && setData({ budget, pricing }))
+      .catch((e) => active && setError(e.message));
+    return () => { active = false; };
+  }, []);
+  if (error || !data) return null;
+  const budget = data.budget || {};
+  const plan = budget.plan || {};
+  const usage = budget.usage || {};
+  const webSearch = budget.web_search || {};
+  const models = data.pricing?.models || [];
+  const priced = models.filter((model) => model.input_micro_idr_per_1m != null).length;
+  const freeCache = budget.free_cache_models || [];
+  const rupiah = (micro) => micro == null ? null : `Rp ${(micro / 1000000).toLocaleString("id-ID")}`;
+  const calls = webSearch.limit == null ? `${webSearch.used ?? "—"}` : `${webSearch.used ?? "—"}/${webSearch.limit}`;
+  return html`<section class="setting-section kenari-budget-card">
+    <div class="section-heading"><h4>${t("Kenari budget")}</h4><span class="default-badge">${budget.status || t("Unavailable")}</span></div>
+    <p class="setting-description">${t("Shared Kenari account budget")}</p>
+    ${plan.name && html`<p class="field-help">${t("Plan")}: ${plan.name}</p>`}
+    <div class="settings-facts">
+      ${plan.weekly_remaining_micro_idr != null && html`<div><dt>${t("Weekly remaining")}</dt><dd>${rupiah(plan.weekly_remaining_micro_idr)}</dd></div>`}
+      ${plan.monthly_remaining_micro_idr != null && html`<div><dt>${t("Monthly remaining")}</dt><dd>${rupiah(plan.monthly_remaining_micro_idr)}</dd></div>`}
+      ${budget.balance_micro_idr != null && html`<div><dt>${t("Balance")}</dt><dd>${rupiah(budget.balance_micro_idr)}</dd></div>`}
+      ${usage.today_micro_idr != null && html`<div><dt>${t("Today usage")}</dt><dd>${rupiah(usage.today_micro_idr)}</dd></div>`}
+      ${usage.last_7d_micro_idr != null && html`<div><dt>${t("7-day usage")}</dt><dd>${rupiah(usage.last_7d_micro_idr)}</dd></div>`}
+      ${usage.last_30d_micro_idr != null && html`<div><dt>${t("30-day usage")}</dt><dd>${rupiah(usage.last_30d_micro_idr)}</dd></div>`}
+      ${budget.web_search && html`<div><dt>${t("Web searches today")}</dt><dd>${calls}</dd></div>`}
+      <div><dt>${t("Priced models")}</dt><dd>${priced}</dd></div>
+      ${freeCache.length > 0 && html`<div><dt>${t("Free cache models")}</dt><dd>${freeCache.length}</dd></div>`}
+    </div>
+    ${budget.stale && html`<p class="field-help">${t("Showing cached Kenari data.")}</p>`}
+    ${budget.reason && html`<p class="field-help">${budget.reason}</p>`}
+  </section>`;
+}
+
 function AgentPresentationEditor({ app }) {
   const current = effectiveAgent(app);
   const [name, setName] = useState(current.name);
@@ -386,7 +426,7 @@ export function Settings({ app, onClose, initialSection = "agent" }) {
     )}</nav>
     <div key=${section} class="settings-panel" id="settings-content" role="tabpanel" aria-labelledby=${`settings-tab-${section}`} tabindex="0">
       ${refreshFailed && html`<p class="form-error" role="alert">${t("Some agent information could not be refreshed. Your other settings are still available.")}</p>`}
-      ${section === "agent" && html`<${Overview} app=${app} /><${AgentPresentationEditor} app=${app} />`}
+      ${section === "agent" && html`<${Overview} app=${app} /><${KenariBudget} /><${AgentPresentationEditor} app=${app} />`}
       ${section === "appearance" && html`<${Appearance} />`}
       ${section === "notifications" && html`<${Notifications} />`}
       ${section === "users" && html`<${Users} app=${app} />`}

@@ -29,6 +29,7 @@ from .session_preferences import saved_choice
 from .session_state import StateUnavailable
 from .transcripts import message_page, session_details
 
+KENARI_PREFIX = "/kenari/v1"
 EXTERNAL_BRANCH = "Update the Talaria plugin in Hermes to branch a conversation from another app."
 NO_HISTORY_BRANCH = "This session has no chat history to branch."
 
@@ -342,6 +343,36 @@ async def model_options(request: Request):
         except APIError:
             pass  # Optional enrichment never makes the standard picker unavailable.
     return JSONResponse(await state.hermes.request("GET", "/api/model/options", params=params))
+
+
+async def kenari_budget(request: Request):
+    """Proxy the optional Kenari Helper account budget contract."""
+    if request.method == "GET":
+        path = "/pricing" if request.url.path.endswith("/pricing") else "/budget"
+        return JSONResponse(
+            await request.app.state.hermes.request("GET", f"{KENARI_PREFIX}{path}")
+        )
+    if request.method == "POST":
+        data = await body(request, 64 * 1024)
+        model = text_field(data, "model", 256).strip()
+        if not model:
+            raise APIError("Choose a Kenari model.", 400, "invalid_request")
+        fields = {"model": model}
+        for key in ("input_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens"):
+            value = data.get(key, 0)
+            if type(value) is not int or value < 0 or value > 100_000_000:
+                raise APIError(
+                    "Token counts must be non-negative integers.", 400, "invalid_request"
+                )
+            fields[key] = value
+        return JSONResponse(
+            await request.app.state.hermes.request(
+                "POST", f"{KENARI_PREFIX}/estimate", json=fields
+            )
+        )
+    return JSONResponse(
+        await request.app.state.hermes.request("GET", f"{KENARI_PREFIX}/pricing")
+    )
 
 
 async def sessions(request: Request):

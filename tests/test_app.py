@@ -14,6 +14,48 @@ def signed_in(url):
         client.close()
 
 
+
+
+def test_kenari_budget_routes_proxy_authenticated_payload(live_app):
+    url, peer, _ = live_app
+    peer.discovery_overrides["/kenari/v1/budget"] = (
+        {"schema": 1, "status": "complete", "currency": "IDR"}, 200
+    )
+    peer.discovery_overrides["/kenari/v1/pricing"] = (
+        {"schema": 1, "models": [{"id": "kenari-test"}]}, 200
+    )
+    peer.discovery_overrides["/kenari/v1/estimate"] = ({"schema": 1, "estimated_idr": 42}, 200)
+    with signed_in(url) as client:
+        assert client.get("/api/kenari/budget").json()["status"] == "complete"
+        assert client.get("/api/kenari/pricing").json()["models"][0]["id"] == "kenari-test"
+        estimate = client.post(
+            "/api/kenari/estimate",
+            json={"model": "kenari-test", "input_tokens": 10},
+        )
+        assert estimate.status_code == 200
+        assert estimate.json()["estimated_idr"] == 42
+    assert ("GET", "/kenari/v1/budget", {}) in peer.calls
+    assert ("GET", "/kenari/v1/pricing", {}) in peer.calls
+    assert ("POST", "/kenari/v1/estimate", {}) in peer.calls
+
+
+def test_kenari_estimate_rejects_invalid_token_counts(live_app):
+    url, peer, _ = live_app
+    with signed_in(url) as client:
+        response = client.post(
+            "/api/kenari/estimate",
+            json={"model": "kenari-test", "input_tokens": -1},
+        )
+    assert response.status_code == 400
+    assert not any(path == "/kenari/v1/estimate" for _, path, _ in peer.calls)
+
+
+def test_kenari_routes_require_talaria_login(live_app):
+    url, _, _ = live_app
+    for path in ("/api/kenari/budget", "/api/kenari/pricing"):
+        assert httpx.get(url + path).status_code == 401
+
+
 def test_auth_and_csrf_boundary(live_app):
     url, _, _ = live_app
     assert httpx.get(url + "/api/sessions").status_code == 401
