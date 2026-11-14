@@ -122,6 +122,7 @@ def test_push_service_worker_is_valid_javascript(live_app):
     response = httpx.get(url + "/push-sw.js")
     assert response.status_code == 200
     script = response.text
+    assert response.headers["service-worker-allowed"] == "/"
     assert "\\\\n" not in script
     assert "self.registration.showNotification" in script
 

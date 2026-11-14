@@ -220,7 +220,11 @@ def service_worker(request: Request):
         "  }));\n"
         "});\n"
     )
-    return PlainTextResponse(script, media_type="application/javascript")
+    return PlainTextResponse(
+        script,
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": f"{base}/"},
+    )
 
 
 def _payload(run_id, event, session=""):
