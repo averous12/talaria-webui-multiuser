@@ -99,15 +99,15 @@ async def users_listing(request: Request):
     return JSONResponse(user, status_code=201)
 
 
-async def user_update(request: Request):
+async def user_update(request: Request):  # noqa: C901
     require_admin(request)
     try:
         user_id = int(request.path_params["user_id"])
     except ValueError as exc:
         raise APIError("Invalid user.", 400) from exc
     data = await body(request)
-    if set(data) - {"password", "enabled", "profile_id"} or not data:
-        raise APIError("Choose a password, profile, or enabled state.", 400)
+    if set(data) - {"password", "enabled", "profile_id", "monthly_budget_idr"} or not data:
+        raise APIError("Choose a password, profile, budget, or enabled state.", 400)
     try:
         if "password" in data:
             request.app.state.users.set_password(user_id, text_field(data, "password", 1024))
@@ -125,6 +125,12 @@ async def user_update(request: Request):
             if type(data["enabled"]) is not bool:
                 raise ValueError("enabled")
             request.app.state.users.set_enabled(user_id, data["enabled"])
+        if "monthly_budget_idr" in data:
+            value = data["monthly_budget_idr"]
+            if type(value) is not int or value < 0 or value > 1_000_000_000_000:
+                raise ValueError("monthly_budget_idr")
+            request.app.state.users.set_monthly_budget(user_id, value * 1_000_000)
+
     except ValueError as exc:
         message = (
             "The last administrator cannot be disabled."
@@ -175,9 +181,15 @@ async def bootstrap(request: Request):
             "profile": request.app.state.profiles.describe(request.app.state.profile_id)
             if logged_in
             else None,
-            "user": request.app.state.users.get(auth.cookie_user_id(request))
-            if logged_in
-            else None,
+            "user": (
+                {
+                    key: value
+                    for key, value in current_user(request).items()
+                    if key != "monthly_budget_micro_idr"
+                }
+                if logged_in and current_user(request)["role"] != "admin"
+                else current_user(request) if logged_in else None
+            ),
             "profiles": request.app.state.profiles.public()["profiles"] if logged_in else [],
         }
     )
@@ -345,6 +357,16 @@ async def model_options(request: Request):
     return JSONResponse(await state.hermes.request("GET", "/api/model/options", params=params))
 
 
+async def user_budget(request: Request):
+    user = current_user(request)
+    if not user:
+        raise APIError("Please sign in to continue.", 401, "unauthenticated")
+    from .budget import profile_usage, snapshot
+
+    usage = await profile_usage(request.app.state.hermes)
+    return JSONResponse(snapshot(user, usage))
+
+
 async def kenari_budget(request: Request):
     """Proxy the optional Kenari Helper account budget contract."""
     if request.method == "GET":
@@ -396,7 +418,13 @@ async def sessions(request: Request):
     for attempt in range(6):
         try:
             result = await client.request("POST", "/api/sessions", json=payload)
-            return JSONResponse(object_result(result).get("session", result), status_code=201)
+            session = object_result(result).get("session", result)
+            user = current_user(request)
+            if user:
+                request.app.state.users.claim(
+                    user["id"], request.app.state.profile_id, session["id"]
+                )
+            return JSONResponse(session, status_code=201)
         except APIError as exc:
             if exc.code != "invalid_title":
                 raise
@@ -404,7 +432,11 @@ async def sessions(request: Request):
             payload["title"] = f"{base} ({attempt + 2})"
     payload.pop("title", None)
     result = await client.request("POST", "/api/sessions", json=payload)
-    return JSONResponse(object_result(result).get("session", result), status_code=201)
+    session = object_result(result).get("session", result)
+    user = current_user(request)
+    if user:
+        request.app.state.users.claim(user["id"], request.app.state.profile_id, session["id"])
+    return JSONResponse(session, status_code=201)
 
 
 async def session(request: Request):
@@ -582,6 +614,18 @@ async def start_run(request: Request):
     idem = text_field(data, "request_id", 128) or secrets.token_hex(16)
     identifier(idem)
     state = request.app.state
+    user = current_user(request)
+    if user and user["role"] != "admin":
+        from .budget import profile_usage, snapshot
+
+        budget = snapshot(user, await profile_usage(state.hermes))
+        if budget["blocked"]:
+            raise APIError(
+                "Your weekly or monthly budget has been reached. "
+                "Ask an administrator to increase it.",
+                429,
+                "budget_exceeded",
+            )
     # ProfileRouter keeps this connection in flight until the request completes;
     # connection replacement/removal already refuses while that count is nonzero.
     with state.profiles.reserve_run():

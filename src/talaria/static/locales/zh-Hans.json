@@ -709,7 +709,6 @@
   "Administrators can access every Hermes profile. Each user is assigned one profile.": "Administrators can access every Hermes profile. Each user is assigned one profile.",
   "Assign this user to one Hermes profile.": "Assign this user to one Hermes profile.",
   "Assigned profile": "Assigned profile",
-  "Choose a password, profile, or enabled state.": "Choose a password, profile, or enabled state.",
   "Choose an existing Hermes profile.": "Choose an existing Hermes profile.",
   "Could not create the user.": "Could not create the user.",
   "Creating…": "Creating…",
@@ -727,5 +726,14 @@
   "Agent name": "Agent name",
   "Choose a valid agent name and icon.": "Choose a valid agent name and icon.",
   "Save agent appearance": "Save agent appearance",
-  "Saving…": "Saving…"
+  "Saving…": "Saving…",
+  "Active": "启用",
+  "Blocked": "已阻止",
+  "Choose a password, profile, budget, or enabled state.": "请选择密码、配置文件、预算或启用状态。",
+  "Monthly": "每月",
+  "Monthly budget (IDR)": "每月预算（IDR）",
+  "Weekly": "每周",
+  "Your budget": "你的预算",
+  "Your budget limit has been reached. New messages are blocked until an administrator changes your budget.": "你的预算上限已达到。在管理员更改预算前，新消息将被阻止。",
+  "Your weekly or monthly budget has been reached. Ask an administrator to increase it.": "你的每周或每月预算已达到。请管理员提高预算。"
 }

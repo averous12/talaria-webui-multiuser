@@ -105,20 +105,19 @@ function Overview({ app }) {
 
 function KenariBudget() {
   const [data, setData] = useState(null);
-  const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
     Promise.all([api("/kenari/budget"), api("/kenari/pricing")])
       .then(([budget, pricing]) => active && setData({ budget, pricing }))
-      .catch((e) => active && setError(e.message));
+      .catch(() => active && setData({ budget: {}, pricing: {} }));
     return () => { active = false; };
   }, []);
-  if (error || !data) return null;
-  const budget = data.budget || {};
+  const payload = data || { budget: {}, pricing: {} };
+  const budget = payload.budget || {};
   const plan = budget.plan || {};
   const usage = budget.usage || {};
   const webSearch = budget.web_search || {};
-  const models = data.pricing?.models || [];
+  const models = payload.pricing?.models || [];
   const priced = models.filter((model) => model.input_micro_idr_per_1m != null).length;
   const freeCache = budget.free_cache_models || [];
   const rupiah = (micro) => micro == null ? null : `Rp ${(micro / 1000000).toLocaleString("id-ID")}`;
@@ -140,6 +139,22 @@ function KenariBudget() {
     </div>
     ${budget.stale && html`<p class="field-help">${t("Showing cached Kenari data.")}</p>`}
     ${budget.reason && html`<p class="field-help">${budget.reason}</p>`}
+  </section>`;
+}
+
+function UserBudget({ app }) {
+  const [budget, setBudget] = useState(null);
+  useEffect(() => {
+    if (app.user?.role === "admin") return undefined;
+    let active = true;
+    api("/budget").then((value) => active && setBudget(value)).catch(() => {});
+    return () => { active = false; };
+  }, [app.user?.role]);
+  if (app.user?.role === "admin" || !budget?.configured) return null;
+  return html`<section class=${`setting-section user-budget ${budget.blocked ? "budget-blocked" : ""}`}>
+    <div class="section-heading"><h4>${t("Your budget")}</h4><span class="default-badge">${budget.blocked ? t("Blocked") : t("Active")}</span></div>
+    <div class="budget-percentages"><span>${t("Weekly")}: <strong>${budget.weekly_percent}%</strong></span><span>${t("Monthly")}: <strong>${budget.monthly_percent}%</strong></span></div>
+    ${budget.blocked && html`<p class="field-help">${t("Your budget limit has been reached. New messages are blocked until an administrator changes your budget.")}</p>`}
   </section>`;
 }
 
@@ -292,6 +307,7 @@ function Users({ app }) {
   const [users, setUsers] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [form, setForm] = useState({ username: "", password: "", profile_id: "default" });
+  const [budgetBusy, setBudgetBusy] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   async function refresh() {
@@ -326,6 +342,20 @@ function Users({ app }) {
       setError(e.message);
     }
   }
+  async function setUserBudget(user, value) {
+    setBudgetBusy(user.id);
+    try {
+      await api(`/users/${user.id}`, {
+        method: "PATCH",
+        body: { monthly_budget_idr: Math.max(0, Math.floor(Number(value) || 0)) },
+      });
+      await refresh();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBudgetBusy("");
+    }
+  }
   return html`<div class="users-panel">
     <section class="setting-section">
       <h3>${t("Users")}</h3>
@@ -339,6 +369,7 @@ function Users({ app }) {
           </div>
           <div class="user-actions">
             <span class=${`status-badge ${user.role === "admin" ? "positive" : ""}`}>${t(user.role)}</span>
+            ${user.role === "user" && html`<label class="budget-input">${t("Monthly budget (IDR)")}<input type="number" min="0" step="1" value=${user.monthly_budget_micro_idr == null ? "" : user.monthly_budget_micro_idr / 1000000} onChange=${(e) => setUserBudget(user, e.target.value)} disabled=${budgetBusy === user.id} /></label>`}
             <button class="button secondary" disabled=${user.id === app.user.id} onClick=${() => toggle(user)}>${user.enabled ? t("Disable") : t("Enable")}</button>
           </div>
         </div>`)}
@@ -426,7 +457,7 @@ export function Settings({ app, onClose, initialSection = "agent" }) {
     )}</nav>
     <div key=${section} class="settings-panel" id="settings-content" role="tabpanel" aria-labelledby=${`settings-tab-${section}`} tabindex="0">
       ${refreshFailed && html`<p class="form-error" role="alert">${t("Some agent information could not be refreshed. Your other settings are still available.")}</p>`}
-      ${section === "agent" && html`<${Overview} app=${app} /><${KenariBudget} /><${AgentPresentationEditor} app=${app} />`}
+      ${section === "agent" && html`<${Overview} app=${app} />${app.user?.role === "admin" ? html`<${KenariBudget} />` : html`<${UserBudget} app=${app} />`}<${AgentPresentationEditor} app=${app} />`}
       ${section === "appearance" && html`<${Appearance} />`}
       ${section === "notifications" && html`<${Notifications} />`}
       ${section === "users" && html`<${Users} app=${app} />`}

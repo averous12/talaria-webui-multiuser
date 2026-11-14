@@ -708,7 +708,6 @@
   "Administrators can access every Hermes profile. Each user is assigned one profile.": "Administrators can access every Hermes profile. Each user is assigned one profile.",
   "Assign this user to one Hermes profile.": "Assign this user to one Hermes profile.",
   "Assigned profile": "Assigned profile",
-  "Choose a password, profile, or enabled state.": "Choose a password, profile, or enabled state.",
   "Choose an existing Hermes profile.": "Choose an existing Hermes profile.",
   "Could not create the user.": "Could not create the user.",
   "Creating…": "Creating…",
@@ -727,5 +726,14 @@
   "Choose a valid agent name and icon.": "Choose a valid agent name and icon.",
   "Save agent appearance": "Save agent appearance",
   "Saving…": "Saving…",
-  "Browser notifications are enabled.": "Notifikasi browser aktif."
+  "Browser notifications are enabled.": "Notifikasi browser aktif.",
+  "Active": "Aktif",
+  "Blocked": "Diblokir",
+  "Choose a password, profile, budget, or enabled state.": "Pilih kata sandi, profil, anggaran, atau status aktif.",
+  "Monthly": "Bulanan",
+  "Monthly budget (IDR)": "Anggaran bulanan (IDR)",
+  "Weekly": "Mingguan",
+  "Your budget": "Anggaran kamu",
+  "Your budget limit has been reached. New messages are blocked until an administrator changes your budget.": "Batas anggaran kamu telah tercapai. Pesan baru diblokir sampai administrator mengubahnya.",
+  "Your weekly or monthly budget has been reached. Ask an administrator to increase it.": "Anggaran mingguan atau bulanan kamu telah tercapai. Minta administrator untuk meningkatkannya."
 }

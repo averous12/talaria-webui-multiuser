@@ -21,6 +21,14 @@ def test_admin_can_create_user_and_user_password_isolated(tmp_path):
         store.create("bob", "password", "owner")
 
 
+def test_user_store_budget_is_admin_configurable(tmp_path):
+    store = UserStore(tmp_path / "users.db", hash_password("secret"))
+    user = store.create("alice", "alice-password", "user")
+    assert user["monthly_budget_micro_idr"] is None
+    store.set_monthly_budget(user["id"], 12_000_000)
+    assert store.get(user["id"])["monthly_budget_micro_idr"] == 12_000_000
+
+
 def test_user_store_disables_user_but_keeps_admin(tmp_path):
     store = UserStore(tmp_path / "users.db", hash_password("secret"))
     user = store.create("alice", "alice-password", "user")

@@ -41,7 +41,8 @@ class UserStore:
                     created REAL NOT NULL,
                     updated REAL NOT NULL,
                     profile_id TEXT,
-                    presentation TEXT
+                    presentation TEXT,
+                    monthly_budget_micro_idr INTEGER
                 )"""
             )
             db.execute(
@@ -62,6 +63,8 @@ class UserStore:
                 db.execute("ALTER TABLE users ADD COLUMN profile_id TEXT")
             if "presentation" not in columns:
                 db.execute("ALTER TABLE users ADD COLUMN presentation TEXT")
+            if "monthly_budget_micro_idr" not in columns:
+                db.execute("ALTER TABLE users ADD COLUMN monthly_budget_micro_idr INTEGER")
             if db.execute("SELECT 1 FROM users LIMIT 1").fetchone() is None:
                 if not legacy_password_hash:
                     raise ValueError("At least one administrator account is required.")
@@ -82,6 +85,7 @@ class UserStore:
             "created": row[4],
             "profile_id": row[5],
             "presentation": _presentation(row[6]),
+            "monthly_budget_micro_idr": row[7],
         }
 
     def authenticate(self, username, password):
@@ -91,19 +95,21 @@ class UserStore:
             return None
         with sqlite3.connect(self.path) as db:
             row = db.execute(
-                "SELECT id,username,password_hash,role,enabled,created,profile_id,presentation "
+                "SELECT id,username,password_hash,role,enabled,created,profile_id,"
+                "presentation,monthly_budget_micro_idr "
                 "FROM users "
                 "WHERE username = ? COLLATE NOCASE",
                 (username,),
             ).fetchone()
         if not row or not row[4] or not verify_password(password, row[2]):
             return None
-        return self._public((row[0], row[1], row[3], row[4], row[5], row[6], row[7]))
+        return self._public((row[0], row[1], row[3], row[4], row[5], row[6], row[7], row[8]))
 
     def list_public(self):
         with sqlite3.connect(self.path) as db:
             rows = db.execute(
-                "SELECT id,username,role,enabled,created,profile_id,presentation "
+                "SELECT id,username,role,enabled,created,profile_id,"
+                "presentation,monthly_budget_micro_idr "
                 "FROM users ORDER BY id"
             ).fetchall()
         return [self._public(row) for row in rows]
@@ -120,21 +126,24 @@ class UserStore:
             with sqlite3.connect(self.path) as db:
                 cursor = db.execute(
                     "INSERT INTO users "
-                    "(username,password_hash,role,created,updated,profile_id,presentation) "
-                    "VALUES (?,?,?,?,?,?,?)",
-                    (
-                        username,
-                        hash_password(password),
-                        role,
-                        now,
-                        now,
-                        profile_id,
-                        json.dumps(DEFAULT_PRESENTATION),
-                    ),
+                    "(username,password_hash,role,created,updated,profile_id,"
+                    "presentation,monthly_budget_micro_idr) "
+                    "VALUES (?,?,?,?,?,?,?,?)",
+                                        (
+                                            username,
+                                            hash_password(password),
+                                            role,
+                                            now,
+                                            now,
+                                            profile_id,
+                                            json.dumps(DEFAULT_PRESENTATION),
+                                            None,
+                                        ),
                 )
                 user_id = cursor.lastrowid
                 row = db.execute(
-                    "SELECT id,username,role,enabled,created,profile_id,presentation "
+                    "SELECT id,username,role,enabled,created,profile_id,"
+                    "presentation,monthly_budget_micro_idr "
                     "FROM users WHERE id=?",
                     (user_id,),
                 ).fetchone()
@@ -145,7 +154,8 @@ class UserStore:
     def get(self, user_id):
         with sqlite3.connect(self.path) as db:
             row = db.execute(
-                "SELECT id,username,role,enabled,created,profile_id,presentation "
+                "SELECT id,username,role,enabled,created,profile_id,"
+                "presentation,monthly_budget_micro_idr "
                 "FROM users WHERE id=?",
                 (user_id,),
             ).fetchone()
@@ -182,6 +192,7 @@ class UserStore:
     def assign(self, user_id, profile, session):
         self.claim(user_id, profile, session)
 
+
     def set_presentation(self, user_id, value):
         value = validate_presentation(value)
         with sqlite3.connect(self.path) as db:
@@ -190,6 +201,15 @@ class UserStore:
                 (json.dumps(value, sort_keys=True), time.time(), user_id),
             )
         return value
+
+    def set_monthly_budget(self, user_id, monthly_budget_micro_idr):
+        if type(monthly_budget_micro_idr) is not int or monthly_budget_micro_idr < 0:
+            raise ValueError("monthly_budget_micro_idr")
+        with sqlite3.connect(self.path) as db:
+            db.execute(
+                "UPDATE users SET monthly_budget_micro_idr=?, updated=? WHERE id=?",
+                (monthly_budget_micro_idr or None, time.time(), user_id),
+            )
 
     def assign_profile(self, user_id, profile_id):
         with sqlite3.connect(self.path) as db:

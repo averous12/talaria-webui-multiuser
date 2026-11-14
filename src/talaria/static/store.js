@@ -58,6 +58,7 @@ export const state = {
   agent: { name: "Hermes", name_source: "fallback" },
   user: null,
   agentPresentation: { name: "Hermes", icon: "orb" },
+  budget: null,
   branding: {
     product_name: "Talaria",
     short_name: "Talaria",
@@ -170,6 +171,7 @@ export async function initialize(signal = new AbortController().signal) {
       environment: data.environment || "production",
       profiles: data.profiles || [],
       profile: data.profile || null,
+      budget: data.user?.role === "admin" ? null : await api("/budget").catch(() => null),
       error: "",
     });
     if (data.authenticated) await connect(data.connected);

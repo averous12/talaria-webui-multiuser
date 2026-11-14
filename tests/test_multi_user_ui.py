@@ -16,6 +16,9 @@ def test_regular_user_settings_are_limited_to_three_sections(browser, live_app):
             },
         )
         assert created.status_code == 201
+        assert admin.patch(
+            f"/api/users/{created.json()['id']}", json={"monthly_budget_idr": 100}
+        ).status_code == 200
     context = browser.new_context(viewport={"width": 1280, "height": 800})
     context.add_cookies([
         {
@@ -34,6 +37,8 @@ def test_regular_user_settings_are_limited_to_three_sections(browser, live_app):
         assert page.get_by_role("tab").all_inner_texts() == [
             "Your agent", "Appearance", "Notifications"
         ]
+        assert page.get_by_text("Kenari budget").count() == 0
+        assert page.get_by_text("Your budget").count() == 1
         page.get_by_role("button", name="Close dialog").click()
         assert page.locator(".agent-switcher").count() == 0
         assert page.get_by_role("button", name="Choose model", exact=True).count() == 0
@@ -76,6 +81,7 @@ def test_user_agent_presentation_overlays_branding(page):
 
 def test_admin_settings_new_surfaces_match_existing_dialog(page):
     page.get_by_role("button", name="Settings").click()
+    assert page.get_by_text("Kenari budget").count() == 1
     page.get_by_role("tab", name="Users").click()
     page.locator(".users-panel").wait_for()
     page.locator(".user-row").first.wait_for()

@@ -709,7 +709,6 @@
   "Administrators can access every Hermes profile. Each user is assigned one profile.": "Administrators can access every Hermes profile. Each user is assigned one profile.",
   "Assign this user to one Hermes profile.": "Assign this user to one Hermes profile.",
   "Assigned profile": "Assigned profile",
-  "Choose a password, profile, or enabled state.": "Choose a password, profile, or enabled state.",
   "Choose an existing Hermes profile.": "Choose an existing Hermes profile.",
   "Could not create the user.": "Could not create the user.",
   "Creating…": "Creating…",
@@ -727,5 +726,14 @@
   "Agent name": "Agent name",
   "Choose a valid agent name and icon.": "Choose a valid agent name and icon.",
   "Save agent appearance": "Save agent appearance",
-  "Saving…": "Saving…"
+  "Saving…": "Saving…",
+  "Active": "有効",
+  "Blocked": "ブロック中",
+  "Choose a password, profile, budget, or enabled state.": "パスワード、プロフィール、予算、または有効状態を選択してください。",
+  "Monthly": "月間",
+  "Monthly budget (IDR)": "月間予算（IDR）",
+  "Weekly": "週間",
+  "Your budget": "あなたの予算",
+  "Your budget limit has been reached. New messages are blocked until an administrator changes your budget.": "予算上限に達しました。管理者が変更するまで新しいメッセージはブロックされます。",
+  "Your weekly or monthly budget has been reached. Ask an administrator to increase it.": "週間または月間予算に達しました。管理者に増額を依頼してください。"
 }

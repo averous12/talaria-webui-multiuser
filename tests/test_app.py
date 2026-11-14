@@ -56,7 +56,45 @@ def test_kenari_routes_require_talaria_login(live_app):
         assert httpx.get(url + path).status_code == 401
 
 
-def test_auth_and_csrf_boundary(live_app):
+
+
+def test_admin_budget_percentages_and_new_run_block(live_app):
+    url, peer, _ = live_app
+    with signed_in(url) as admin:
+        created = admin.post(
+            "/api/users",
+            json={
+                "username": "budget-user",
+                "password": "budget-password",
+                "role": "user",
+                "profile_id": "default",
+            },
+        )
+        assert created.status_code == 201
+        user_id = created.json()["id"]
+        assert admin.patch(
+            f"/api/users/{user_id}", json={"monthly_budget_idr": 4}
+        ).status_code == 200
+        sid = admin.post("/api/sessions", json={"title": "Budget session"}).json()["id"]
+        peer.sessions[sid]["actual_cost_micro_idr"] = 5_000_000
+    user = httpx.Client(base_url=url, headers={"X-Talaria-Request": "1"})
+    try:
+        assert user.post(
+            "/api/login",
+            json={"username": "budget-user", "password": "budget-password"},
+        ).status_code == 200
+        user.headers["X-CSRF-Token"] = user.get("/api/bootstrap").json()["csrf"]
+        budget = user.get("/api/budget").json()
+        assert budget["blocked"] is True
+        assert budget["weekly_percent"] == 100
+        assert budget["monthly_percent"] == 100
+        assert "monthly_budget_micro_idr" not in user.get("/api/bootstrap").json()["user"]
+        blocked = user.post("/api/runs", json={"session_id": sid, "input": "new message"})
+        assert blocked.status_code == 429
+        assert blocked.json()["code"] == "budget_exceeded"
+    finally:
+        user.close()
+
     url, _, _ = live_app
     assert httpx.get(url + "/api/sessions").status_code == 401
     with signed_in(url) as client:

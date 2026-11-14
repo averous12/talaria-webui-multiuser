@@ -722,7 +722,6 @@
   "Administrators can access every Hermes profile. Each user is assigned one profile.": "Administrators can access every Hermes profile. Each user is assigned one profile.",
   "Assign this user to one Hermes profile.": "Assign this user to one Hermes profile.",
   "Assigned profile": "Assigned profile",
-  "Choose a password, profile, or enabled state.": "Choose a password, profile, or enabled state.",
   "Choose an existing Hermes profile.": "Choose an existing Hermes profile.",
   "Could not create the user.": "Could not create the user.",
   "Creating…": "Creating…",
@@ -740,5 +739,14 @@
   "Agent name": "Agent name",
   "Choose a valid agent name and icon.": "Choose a valid agent name and icon.",
   "Save agent appearance": "Save agent appearance",
-  "Saving…": "Saving…"
+  "Saving…": "Saving…",
+  "Active": "Aktiv",
+  "Blocked": "Gesperrt",
+  "Choose a password, profile, budget, or enabled state.": "Wähle ein Passwort, ein Profil, ein Budget oder den Aktivierungsstatus.",
+  "Monthly": "Monatlich",
+  "Monthly budget (IDR)": "Monatliches Budget (IDR)",
+  "Weekly": "Wöchentlich",
+  "Your budget": "Dein Budget",
+  "Your budget limit has been reached. New messages are blocked until an administrator changes your budget.": "Dein Budgetlimit ist erreicht. Neue Nachrichten sind gesperrt, bis ein Administrator es ändert.",
+  "Your weekly or monthly budget has been reached. Ask an administrator to increase it.": "Dein Wochen- oder Monatsbudget ist erreicht. Bitte einen Administrator, es zu erhöhen."
 }

@@ -151,6 +151,7 @@ export function Composer({
       attaching ||
       loadingImages ||
       app.loading ||
+      app.budget?.blocked ||
       live?.uncertain ||
       (!text && !attachments.length)
     )
