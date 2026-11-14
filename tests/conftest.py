@@ -1,5 +1,10 @@
 import asyncio
-import fcntl
+
+try:
+    import fcntl
+except ModuleNotFoundError:  # pragma: no cover - Windows test runner
+    fcntl = None
+    import msvcrt
 import json
 import os
 import re
@@ -160,16 +165,26 @@ def packaged_assets(tmp_path_factory):
     root.mkdir(exist_ok=True)
     assets = root / "wheel/talaria/static"
     with (root / "lock").open("w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        if not assets.is_dir():
-            subprocess.run(
-                [shutil.which("uv"), "build", "--wheel", "--out-dir", str(root)],
-                cwd=Path(__file__).resolve().parents[1],
-                check=True,
-                capture_output=True,
-            )
-            with zipfile.ZipFile(next(root.glob("*.whl"))) as wheel:
-                wheel.extractall(root / "wheel")
+        if fcntl:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+        else:
+            msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+        try:
+            if not assets.is_dir():
+                subprocess.run(
+                    [shutil.which("uv"), "build", "--wheel", "--out-dir", str(root)],
+                    cwd=Path(__file__).resolve().parents[1],
+                    check=True,
+                    capture_output=True,
+                )
+                with zipfile.ZipFile(next(root.glob("*.whl"))) as wheel:
+                    wheel.extractall(root / "wheel")
+        finally:
+            if fcntl:
+                fcntl.flock(lock, fcntl.LOCK_UN)
+            else:
+                lock.seek(0)
+                msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
     return assets
 
 

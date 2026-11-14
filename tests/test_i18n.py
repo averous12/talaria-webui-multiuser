@@ -19,7 +19,7 @@ from .test_conversation_features import seed
 CATALOG_ROUTE = "**/static/locales/*.json"
 
 
-@pytest.mark.parametrize("locale", ["en", "zh-Hans", "es", "pt-BR", "fr", "de", "ja"])
+@pytest.mark.parametrize("locale", ["en", "zh-Hans", "es", "pt-BR", "fr", "de", "ja", "id"])
 def test_shipped_languages_cover_login_and_mobile_settings(browser, live_app, locale):
     catalog = json.loads(
         (Path(__file__).parents[1] / f"src/talaria/static/locales/{locale}.json").read_text()

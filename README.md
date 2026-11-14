@@ -8,7 +8,7 @@
 [![Latest release](https://img.shields.io/github/v/release/liamsmith86/talaria-webui?sort=semver)](https://github.com/liamsmith86/talaria-webui/releases/latest)
 [![Hermes Agent 0.21.5+](https://img.shields.io/badge/Hermes%20Agent-0.21.5%2B-555)](https://github.com/NousResearch/hermes-agent)
 [![Docker image](https://img.shields.io/badge/Docker-ghcr.io-2496ED?logo=docker&logoColor=white)](https://github.com/liamsmith86/talaria-webui/pkgs/container/talaria-webui)
-[![7 languages](https://img.shields.io/badge/languages-7-555)](src/talaria/static/locales)
+[![8 languages](https://img.shields.io/badge/languages-8-555)](src/talaria/static/locales)
 
 > [!NOTE]
 > Talaria WebUI is feature complete and actively maintained. Development prioritizes bug fixes, security testing, stability and performance improvements, and ongoing verification to ensure compatibility with future Hermes Agent releases. Low commit activity does not mean the project is abandoned. Opening GitHub Issues is welcome and encouraged and all will be triaged in a timely manner.
@@ -131,7 +131,7 @@ hermes gateway restart
 - Mobile and desktop layouts with a collapsible sidebar.
 - Add Talaria to your home screen from your browser’s menu.
 - Light and dark themes with accent colors.
-- Seven interface languages with automatic language selection.
+- Eight interface languages with automatic language selection.
 - Switch between Hermes profiles and connections.
 - Per-session model and reasoning settings.
 - Inline approval requests and clarification questions.

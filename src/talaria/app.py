@@ -13,6 +13,8 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route
 
 from . import (
+    artifact_routes,
+    artifacts,
     auth,
     extensions,
     installation,
@@ -147,6 +149,8 @@ def create_app(
             Route("/api/sessions/{session_id}/around", session_views.view),
             Route("/api/sessions", routes.sessions, methods=["GET", "POST"]),
             Route("/api/sessions/{session_id}/messages", routes.messages),
+            Route("/api/sessions/{session_id}/artifacts", artifact_routes.fetch, methods=["POST"]),
+            Route("/api/artifacts/{artifact_id}", artifact_routes.download),
             Route("/api/sessions/{session_id}/context", extensions.session_extension),
             Route("/api/sessions/{session_id}/response", extensions.session_extension),
             Route(
@@ -190,6 +194,12 @@ def create_app(
     app.state.extensions = extensions.Extensions()
     app.state.profile_id = profile_id
     app.state.profiles = profiles or Profiles(app, transport)
+    app.state.artifacts = artifacts.ArtifactStore(
+        app.state.config_path.with_name(app.state.config_path.stem + ".artifacts.db"),
+        profile_id=profile_id,
+    )
+    if profiles is not None and not hasattr(profiles, "artifacts"):
+        profiles.artifacts = app.state.artifacts
     # One record of session activity serves every profile; rows carry the profile ID.
     app.state.session_state = (
         profiles.app.state.session_state if profiles else SessionState(config_path)

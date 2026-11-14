@@ -10,6 +10,7 @@ export const languages = [
   { code: "fr", name: "Français", dir: "ltr" },
   { code: "de", name: "Deutsch", dir: "ltr" },
   { code: "ja", name: "日本語", dir: "ltr" },
+  { code: "id", name: "Bahasa Indonesia", dir: "ltr" },
 ];
 const storageKey = "talaria.language";
 const listeners = new Set();

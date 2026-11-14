@@ -170,6 +170,9 @@ def wire(app, adapter, **kwargs):
         app.router.add_get(
             f"{prefix}/sessions/{{session_id}}/{{action:context|response|around}}", dispatch_request
         )
+        app.router.add_get(
+            f"{prefix}/sessions/{{session_id}}/{{message_id}}/artifact", dispatch_request
+        )
         app.router.add_post(
             f"{prefix}/sessions/{{session_id}}/{{action:rewind|fork}}", dispatch_request
         )
@@ -200,6 +203,8 @@ async def dispatch(request, adapter, commands=None):
             {"error": "Talaria plugin is not enabled for this profile."}, status=404
         )
     try:
+        if is_artifact_request(request):
+            return await dispatch_artifact(request, adapter)
         return await dispatch_action(request, adapter, commands)
     except (ValueError, TypeError):
         return web.json_response(
@@ -335,6 +340,23 @@ async def session_details(request, db, sid, action):
     return web.json_response(
         {"context": await asyncio.to_thread(context_usage, db, sid, observations)}
     )
+
+
+async def dispatch_artifact(request, adapter):
+    from aiohttp import web
+
+    from .artifacts import dispatch as artifact_dispatch
+
+    db = await adapter._ensure_session_db_async()
+    if db is None:
+        return web.json_response(
+            {"error": "Hermes session storage is unavailable."}, status=503
+        )
+    return await artifact_dispatch(request, adapter, db)
+
+
+def is_artifact_request(request):
+    return "message_id" in request.match_info
 
 
 async def dispatch_action(request, adapter, commands=None):

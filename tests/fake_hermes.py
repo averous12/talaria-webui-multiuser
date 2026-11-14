@@ -53,6 +53,7 @@ class FakeHermes:
         self.command_refusal = None
         # Seconds the plugin takes to accept a command, and whether its answer is lost.
         self.command_delay = 0.0
+        self.artifact_delay = 0.0
         self.command_answer_lost = False
         self.calls = []
         self.app = Starlette(
@@ -112,6 +113,8 @@ class FakeHermes:
         self.calls.append((request.method, path, dict(request.query_params)))
         body = await request.json() if request.method in {"POST", "PATCH", "PUT"} else {}
         if path in self.discovery_overrides:
+            if path.endswith("/artifact") and self.artifact_delay:
+                await asyncio.sleep(self.artifact_delay)
             return JSONResponse(*self.discovery_overrides[path])
         plugin_fork = path.startswith("/talaria/v1/sessions/") and path.endswith("/fork")
         if plugin_fork:

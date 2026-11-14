@@ -6,6 +6,7 @@ import {
   useState,
   useMemo,
   useCallback,
+  useEffect,
   Icon,
   IconButton,
   humanTime,
@@ -13,6 +14,7 @@ import {
 import { CommandCard, commandRunning } from "./command-activity.js";
 import { Clarification } from "./clarification.js";
 import { Markdown } from "./markdown.js";
+import { api } from "./api.js";
 import {
   ActivityGroup,
   AgentCard,
@@ -47,6 +49,31 @@ import { useReplyJump, useScrollControls, scrollBehavior } from "./reply-jump.js
 import { useHistoryAnchor } from "./history-anchor.js";
 import { t, msg, useLanguage } from "./i18n.js";
 
+const MEDIA_LINE = /^\s*(?:[-*]\s*)?MEDIA:\s*(.+?)\s*$/;
+function normalizeMediaPath(value) {
+  return String(value || "").replace(/^[`"']|[`"']$/g, "").replace(/^file:\/\//i, "");
+}
+function mediaFiles(text) {
+  return String(text || "").split("\n").map((line, index) => {
+    const match = line.match(MEDIA_LINE);
+    return match ? { index, path: normalizeMediaPath(match[1]) } : null;
+  }).filter((item) => item?.path && !item.path.startsWith("http://") && !item.path.startsWith("https://"));
+}
+function ArtifactCard({ artifact, busy, onRetry }) {
+  if (artifact?.url && artifact.mime?.startsWith("image/"))
+    return html`<${Images} images=${[{ id: artifact.id, name: artifact.name, url: artifact.url }]} />`;
+  if (artifact?.url) return html`<a class="artifact-link" href=${artifact.url} download=${artifact.name}>
+    <span class="artifact-icon"><${Icon} name="file" size=${18} /></span>
+    <span class="artifact-description"><strong>${artifact.name}</strong><small>${artifact.mime}</small></span>
+    <${Icon} name="download" size=${18} />
+  </a>`;
+  if (busy) return html`<div class="artifact-skeleton" role="status" aria-label=${t("Preparing file download")}>
+    <span class="artifact-skeleton-icon"></span><span class="artifact-skeleton-lines"><i></i><i></i></span><span class="artifact-skeleton-button"></span>
+  </div>`;
+  return html`<div class="artifact-error" role="status"><span>${t("File download unavailable")}</span>
+    <button type="button" class="text-button" onClick=${onRetry}>${t("Try again")}</button></div>`;
+}
+
 function Message({
   role,
   text,
@@ -69,9 +96,62 @@ function Message({
   formatLocale,
 }) {
   const [copied, setCopied] = useState(false);
-  // Reconciliation adds a native record to the existing live message. Code
-  // already shown must not return to deferred highlighting at that boundary.
+  const [artifactLinks, setArtifactLinks] = useState(new Map());
+  const artifactRequests = useRef(new Set());
   const deferHighlight = useRef(!!record).current;
+  const artifactMessageId = record?.id;
+  const artifactSessionId = state.active;
+  const mediaSignature = useMemo(() => mediaFiles(text).map((item) => item.path).join("\0"), [text]);
+  const fetchArtifact = useCallback(async (path) => {
+    const key = `${artifactSessionId}:${artifactMessageId}:${path}`;
+    if (artifactRequests.current.has(key)) return;
+    artifactRequests.current.add(key);
+    setArtifactLinks((current) => new Map(current).set(key, { busy: true }));
+    try {
+      const artifact = await api(`/sessions/${encodeURIComponent(artifactSessionId)}/artifacts`, {
+        method: "POST", body: { session_id: artifactSessionId, message_id: artifactMessageId, path },
+      });
+      setArtifactLinks((current) => new Map(current).set(key, { artifact }));
+    } catch (error) {
+      setArtifactLinks((current) => new Map(current).set(key, { error: error.message }));
+    } finally { artifactRequests.current.delete(key); }
+  }, [artifactSessionId, artifactMessageId]);
+  useEffect(() => {
+    if (streaming || role !== "assistant" || !Number.isSafeInteger(artifactMessageId) || !artifactSessionId) return;
+    for (const path of mediaSignature.split("\0").filter(Boolean)) {
+      const key = `${artifactSessionId}:${artifactMessageId}:${path}`;
+      if (!artifactLinks.has(key)) fetchArtifact(path);
+    }
+  }, [streaming, role, artifactSessionId, artifactMessageId, mediaSignature, artifactLinks, fetchArtifact]);
+  const renderText = (value, messageId) => {
+    const lines = String(value || "").split("\n");
+    const nodes = [];
+    let prose = [];
+    const flushProse = () => {
+      if (!prose.length) return;
+      const text = prose.join("\n");
+      nodes.push(html`<${Markdown} key=${`md:${nodes.length}`} text=${text}
+        streaming=${streaming && nodes.length === 0 && lines[lines.length - 1] === prose[prose.length - 1]}
+        smooth=${true} deferHighlight=${deferHighlight} />`);
+      prose = [];
+    };
+    lines.forEach((line, index) => {
+      const match = line.match(MEDIA_LINE);
+      if (!match) {
+        prose.push(line);
+        return;
+      }
+      flushProse();
+      const path = normalizeMediaPath(match[1]);
+      const key = `${artifactSessionId}:${messageId}:${path}`;
+      nodes.push(html`<${ArtifactCard} key=${`media:${index}`} artifact=${artifactLinks.get(key)?.artifact}
+        busy=${artifactLinks.get(key)?.busy || !artifactLinks.has(key)}
+        onRetry=${() => fetchArtifact(path)} />`);
+    });
+    flushProse();
+    return nodes;
+  };
+  // Reconciliation adds a native record to the existing live message. Code
   // Steps the reader opened. A run that becomes a group mounts its steps
   // again, so they reopen from here instead of collapsing mid-response.
   const openSteps = useRef(new Set()).current;
@@ -153,18 +233,11 @@ function Message({
     if (entry.kind === "guidance")
       return html`<${GuidanceRow} key=${entry.key} text=${entry.part.text}
         matched=${matchId && String(entry.part.messageId) === String(matchId)} />`;
-    return (
-      entry.part.text &&
-      html`<div class="message-text" key=${entry.key}
-        data-search-target=${matchId && String(entry.part.messageId) === String(matchId) ? "true" : undefined}>
-        <${Markdown}
-          text=${entry.part.text}
-          streaming=${entry.tail}
-          smooth=${true}
-          deferHighlight=${deferHighlight}
-        />
-      </div>`
-    );
+    if (!entry.part.text) return null;
+    return html`<div class="message-text" key=${entry.key}
+      data-search-target=${matchId && String(entry.part.messageId) === String(matchId) ? "true" : undefined}>
+      ${renderText(entry.part.text, entry.part.messageId || artifactMessageId)}
+    </div>`;
   }
   const content = role === "user" ? null : activityRuns(entries).map(renderPart);
   groups.current = nextGroups;

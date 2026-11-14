@@ -351,6 +351,7 @@ async def remove(request):
                 )
                 profiles.apps.pop(profile_id, None)
                 profiles.inflight.pop(profile_id, None)
+                profiles.artifacts.delete_profile(profile_id)
                 # If Talaria cannot forget the removed profile now, its rows age out.
                 with contextlib.suppress(StateUnavailable):
                     await asyncio.to_thread(
