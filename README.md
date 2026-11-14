@@ -1,14 +1,32 @@
 # Talaria WebUI
 
-[![CI](https://github.com/liamsmith86/talaria-webui/actions/workflows/ci.yml/badge.svg?event=pull_request)](https://github.com/liamsmith86/talaria-webui/actions/workflows/ci.yml)
 [![MIT license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
 [![Linux · macOS · WSL2](https://img.shields.io/badge/platform-Linux%20%C2%B7%20macOS%20%C2%B7%20WSL2-555)](#installation)
-[![Try the demo](https://img.shields.io/badge/demo-fly.withtalaria.com-2563EB)](https://fly.withtalaria.com)
-[![Latest release](https://img.shields.io/github/v/release/liamsmith86/talaria-webui?sort=semver)](https://github.com/liamsmith86/talaria-webui/releases/latest)
 [![Hermes Agent 0.21.5+](https://img.shields.io/badge/Hermes%20Agent-0.21.5%2B-555)](https://github.com/NousResearch/hermes-agent)
-[![Docker image](https://img.shields.io/badge/Docker-ghcr.io-2496ED?logo=docker&logoColor=white)](https://github.com/liamsmith86/talaria-webui/pkgs/container/talaria-webui)
 [![8 languages](https://img.shields.io/badge/languages-8-555)](src/talaria/static/locales)
+
+## Multi-user fork
+
+This repository is a multi-user focused fork of Talaria WebUI:
+
+https://github.com/averous12/talaria-webui-multiuser
+
+It keeps Talaria’s lightweight Hermes interface while adding practical access controls and per-user customization:
+
+- Admin and regular-user roles with server-side authorization.
+- One assigned Hermes profile per regular user; administrators can access every profile.
+- Regular users cannot switch profiles through URL parameters or the interface.
+- Admin-only user management and profile switching.
+- Per-user agent names and custom SVG agent icons.
+- Agent presentation overrides across avatars, conversation labels, readiness text, and the composer.
+- Regular users get the agent presentation, appearance, notifications, and effort controls without model switching.
+- Modular branding packs with logos, icons, product names, and notification branding.
+- Durable browser notifications with Web Push support.
+- Chrome 109 compatibility adjustments and continued localization support.
+
+The fork is maintained for personal multi-user deployments. Issues and improvements should be opened against this repository rather than the upstream project.
+
 
 > [!NOTE]
 > Talaria WebUI is feature complete and actively maintained. Development prioritizes bug fixes, security testing, stability and performance improvements, and ongoing verification to ensure compatibility with future Hermes Agent releases. Low commit activity does not mean the project is abandoned. Opening GitHub Issues is welcome and encouraged and all will be triaged in a timely manner.
@@ -18,8 +36,6 @@ Talaria WebUI is a lightweight, performant, and secure application for chatting 
 Talaria WebUI uses Hermes Agent's [API server](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server) feature to interface with your agent and upon installation you will be prompted to enter an API key for connectivity. Accordingly, Talaria WebUI connects to your agent remotely and does not need to be installed on the same server.
 
 Optionally you can install the Talaria Hermes Agent plugin, a lightweight extension for your Hermes Agent which extends the information returned to Talaria WebUI by the Hermes Agent API. This allows Talaria WebUI to deliver a more polished experience and support features you would expect from a modern agent web interface. This allows us to continue offloading as much functionality to Hermes Agent's existing code without reinventing the wheel ourselves.
-
-**[Try the demo](https://fly.withtalaria.com)**
 
 ![Talaria on desktop: a streamed reply, code and tool details](.github/assets/demo-desktop.gif)
 
@@ -37,7 +53,7 @@ Talaria connects remotely to your Hermes Agent's API and does not need to be ins
 ### Ask your agent (Recommended)
 
 ```text
-Install Talaria WebUI using https://raw.githubusercontent.com/liamsmith86/talaria-webui/stable/install.sh
+Install Talaria WebUI using https://raw.githubusercontent.com/averous12/talaria-webui-multiuser/stable/install.sh
 with --non-interactive --service auto --enable-hermes-api --plugin. Let setup
 discover Hermes and generate the login password; check --help for other options.
 Do not restart the Hermes gateway hosting this session; report any required restart.
@@ -49,37 +65,25 @@ Return the URL and password file path, not the password.
 Linux, macOS, and Windows via WSL2:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/liamsmith86/talaria-webui/stable/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/averous12/talaria-webui-multiuser/stable/install.sh | bash
 ```
 
 Follow the prompts, then open the URL printed by the installer.
 
 Update from Settings → Talaria. Its update channel defaults to Stable, which installs tested releases. Nightly installs each change merged to `main`, before it's released.
 
-### Install via Docker
+### Build from source with Docker
 
-With [Docker](https://docs.docker.com/get-started/get-docker/) installed:
-
-```sh
-docker pull ghcr.io/liamsmith86/talaria-webui:latest
-docker run -d --name talaria --restart unless-stopped \
-  -p 127.0.0.1:8766:8766 -v talaria-data:/data \
-  ghcr.io/liamsmith86/talaria-webui:latest
-```
-
-<details>
-<summary>Build from source instead</summary>
+With [Docker](https://docs.docker.com/get-started/get-docker/) installed, clone this fork and build the image locally:
 
 ```sh
-git clone --branch stable https://github.com/liamsmith86/talaria-webui.git
+git clone --branch stable https://github.com/averous12/talaria-webui-multiuser.git
 cd talaria-webui
 docker build -t talaria-webui .
 docker run -d --name talaria --restart unless-stopped \
   -p 127.0.0.1:8766:8766 -v talaria-data:/data \
   talaria-webui
 ```
-
-</details>
 
 Open **http://127.0.0.1:8766** and retrieve the initial login password:
 
