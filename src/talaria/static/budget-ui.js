@@ -50,9 +50,21 @@ export function BudgetRings({ budget, compact = false }) {
 
 export function BudgetWeekly({ budget }) {
   const value = budget || {};
-  return html`<div class="budget-chat-widget" title=${t("Weekly budget usage")}>
-    <${BudgetRing} label=${t("Weekly")} value=${value.weekly_percent} resetAt=${value.weekly_resets_at} size=${42} compact />
-  </div>`;
+  const [open, setOpen] = useState(false);
+  const countdown = resetCountdown(value.weekly_resets_at);
+  return html`<button
+    type="button"
+    class="budget-chat-widget"
+    aria-label=${t("Weekly budget usage")}
+    aria-expanded=${open}
+    title=${t("Weekly budget usage")}
+    onClick=${() => setOpen(!open)}
+  >
+    <${BudgetRing} label=${t("Weekly")} value=${value.weekly_percent} resetAt=${value.weekly_resets_at} size=${38} compact />
+    ${open && html`<span class="budget-chat-tooltip" role="tooltip">
+      ${t("Weekly budget usage")}: ${value.weekly_percent == null ? "—" : `${Math.round(value.weekly_percent)}%`} · ${countdown}
+    </span>`}
+  </button>`;
 }
 
 export function BudgetBlockedDialog({ budget, onClose }) {

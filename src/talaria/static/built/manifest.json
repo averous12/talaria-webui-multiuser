@@ -3,12 +3,12 @@
   "inputs": {
     "src/talaria/static/access-settings.js": "590f9d9d6f6945f632eecba82a2981ea3469856e721e26505fc44795551d6595",
     "src/talaria/static/api.js": "21af95aba27c3da81bb72bd891ebaaefa6280cc705e8d07a73a8ff5b1a1be6b7",
-    "src/talaria/static/app.js": "cc218049b2e2858a174e2425e237dfa5b27d6211035312c6cbbb97721d7351b4",
+    "src/talaria/static/app.js": "ee445cf8a98404cc3071765ff39b6588ae851df4abee29e48b7ee3a5031e39b7",
     "src/talaria/static/app.webmanifest": "2980c46c6cd1a96648c112d78b3ba344ba3d27a7956b0b0aaa79413d2d23dcb0",
     "src/talaria/static/appearance.js": "307faa9d4237ecb709b223ac6bc1b6c9520638ad85654de1ab7108fa626572e6",
     "src/talaria/static/attachments.js": "27c6474dd9a9d5814d78f05749bf115578589ff6343f9551ab72ab0144d1a5f6",
     "src/talaria/static/boot.js": "f283229e55e49062e6ea0732de815478bb6ebb0ea52f07dff920d364e8c56e77",
-    "src/talaria/static/budget-ui.js": "21f997ae92f0bd78d6018f2730c4a35fd7d7c093ce5b398ba148ff77ecb79396",
+    "src/talaria/static/budget-ui.js": "4f7703eee9dd274592ae0b9fe14e2116ad86fb33d039e323da3b6e1d0baf00e5",
     "src/talaria/static/clarification.js": "040256f0cb78b482df79c02cab5bc7e53967eb1336202a8151fe04cb72a77c11",
     "src/talaria/static/command-activity.js": "8a7fa2d14644f156de109e76ce853796e9bdfdb3a78af7f3051686c2b3c1838b",
     "src/talaria/static/commands.js": "96a3cb023d658160cd0b500c92afe62b6300de577b2e3dce7b38c7935cd87334",
@@ -36,7 +36,7 @@
     "src/talaria/static/locales/en.json": "82ff8826d3134e6f04d34bb73e42d31c6c12615b835f99f12e5ac5112f64968f",
     "src/talaria/static/locales/es.json": "3667ddf75db6b876a30a20b61f1414ddb5a400ead68fe5c2aae165131cf4d74c",
     "src/talaria/static/locales/fr.json": "0fdfcaebb719f34913162386c911db05f9cf4b2dea153043832bb159a73ca4c2",
-    "src/talaria/static/locales/id.json": "ad20797d0eef87ee6dc0fc7e63e02bd5e11d915e7b8b34942385370f384c457b",
+    "src/talaria/static/locales/id.json": "bd53cac1955a87b817fa3dcbf612364763bff58260aa2a62dbffb96ff000f591",
     "src/talaria/static/locales/ja.json": "39ca17ce3714005c79927ea906d2077d1d725dbe72b5fdb30772e2a16140ecc2",
     "src/talaria/static/locales/pt-BR.json": "c39d733bbb85ad5afc7488deca6c2a6c0e69ec9779675f59789d82607bafbf36",
     "src/talaria/static/locales/zh-Hans.json": "0cce0b29801806c0adfadc8114d6c2ad47b29ad5c854e15e8b27f6019bec16fa",
@@ -70,8 +70,8 @@
     "src/talaria/static/styles/demo.css": "054e5325f012fe4d3b3b6dcdd537af849c6515f01aaaeeafaa431ee6e1b62387",
     "src/talaria/static/styles/dialogs.css": "7c10fdc7c5e8b7680c2d7f468b1870aefc4720083f4a415f8048da14ffc2d3a1",
     "src/talaria/static/styles/layout.css": "34029ae16d7e9c68c30071edd5575524f553a4c2fc4d8d72cf537d2dc4e00474",
-    "src/talaria/static/styles/responsive.css": "74f6a05efa07a0c49079d61cca17685b6a923d21b1028fef252ecbb05b621459",
-    "src/talaria/static/styles/settings.css": "6b73ab3d88f27186a15519010c0df2c1e596371b9c68474823f390457507c261",
+    "src/talaria/static/styles/responsive.css": "d02864e803e9e3a068d026cfa467180acc86d557413b820f0671cb118042c15b",
+    "src/talaria/static/styles/settings.css": "ead7b27911fa178392c47018c224dc1bd67de7a73e28cdc25de47d0d9d76884e",
     "src/talaria/static/styles/theme.css": "21fa2e9b67da736dddf9efd8a041634aa80aff9d9cb62441942f66bef0d762f0",
     "src/talaria/static/tool-activity.js": "dbbe754f82e900e31e93784d4466bb4acd2774f6c9e41a47eede521d98a1c664",
     "src/talaria/static/tool-code.js": "befe27447170699f668babbf800f4f750cec5d6bd3dedef8474126257fc097a2",
@@ -92,12 +92,12 @@
     "src/talaria/static/vendor/purify.js": "60c5d5ccbb466de3de3ba863461a92bf134f8c156cef7992da43e0f659bc5cbd"
   },
   "outputs": {
-    "app.js": "8b51fd8b2c3c306f226e3a54af2750aad59bc38be308fff263fb965e6a8245b6",
+    "app.js": "80a46ca7179e4f6bfff5e1d83d1690a4927ce7f7656c096bbd55061a0ad3df75",
     "app.js.LEGAL.txt": "73d9bce4f8578d04671d5f292f69481102cded90049faf903f683c65a825eed3",
-    "app.js.map": "ff3a6679188892092e2b32036724aeb5fcc49189700120e6005ae27f4b3d10d3",
+    "app.js.map": "2e35ac1e344f156b9f8baa8dd482a710f930635c0bab34715c6040b49b871ce7",
     "appearance.js": "ee72fb422aa49fff0fccb147d55442d115a5bcff3d244e8479d6c696448b213a",
     "boot.js": "1f525fc72f6442a7286e25a1379aa92432e95dc0bb66109240207f4c72c43f3c",
     "index.html": "efa1580e2c7e36d78cef137e5fa6581789235d0db978320fe599ff54d2454706",
-    "styles.css": "0ba3251d7b05509951189ecffe38604a40861068878e6625b13b3e420fb3125b"
+    "styles.css": "1d38cd9868cf5ee7ad6d494a39f9a07798ec1de91bd711ea87fd48e09498c086"
   }
 }

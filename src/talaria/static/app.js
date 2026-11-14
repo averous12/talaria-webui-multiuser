@@ -293,7 +293,6 @@ function App() {
         </div>
         ${app.active &&
         html`<div class="topbar-actions">
-          <${ContextIndicator} key=${app.active} app=${app} />
           <${IconButton}
             name="search"
             id="conversation-find-toggle"
@@ -301,13 +300,13 @@ function App() {
             aria-pressed=${app.findOpen}
             onClick=${() => update({ findOpen: !app.findOpen })}
           />
-          ${app.user?.role === "user"
-            ? html`<${BudgetWeekly} budget=${app.budget} />`
-            : html`<${IconButton}
-                name="chart"
-                label=${t("Session details")}
-                onClick=${() => update({ modal: { type: "details", session: current } })}
-              />`}
+          ${app.user?.role === "user" && html`<${BudgetWeekly} budget=${app.budget} />`}
+          <${ContextIndicator} key=${app.active} app=${app} />
+          ${app.user?.role !== "user" && html`<${IconButton}
+            name="chart"
+            label=${t("Session details")}
+            onClick=${() => update({ modal: { type: "details", session: current } })}
+          />`}
           <${IconButton}
             name="more"
             label=${t("Session options")}

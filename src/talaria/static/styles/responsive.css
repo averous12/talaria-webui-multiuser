@@ -164,7 +164,38 @@
   .topbar {
     height: 64px;
     padding: 0 14px;
-    gap: 10px;
+    gap: 8px;
+  }
+  .topbar-left {
+    min-width: 0;
+    flex: 1;
+  }
+  .topbar-actions {
+    flex-shrink: 0;
+    gap: 2px;
+  }
+  .topbar-actions > .icon-button {
+    width: 34px;
+    height: 34px;
+  }
+  .budget-chat-widget {
+    flex-basis: 34px;
+    width: 34px;
+    height: 34px;
+  }
+  .user-row {
+    gap: 8px;
+    overflow-x: auto;
+  }
+  .user-identity {
+    min-width: 145px;
+  }
+  .user-actions {
+    flex-shrink: 0;
+    gap: 7px;
+  }
+  .admin-user-budget {
+    gap: 7px;
   }
   .topbar-title {
     font-size: 12px;
