@@ -56,6 +56,7 @@ import { Startup } from "./startup.js";
 import { LanguageSelector } from "./language.js";
 import { t, useLanguage } from "./i18n.js";
 import { sourceLabel } from "./content.js";
+import { BudgetWeekly } from "./budget-ui.js";
 
 export { state, update, openSession, refreshSessions } from "./store.js";
 
@@ -300,12 +301,13 @@ function App() {
             aria-pressed=${app.findOpen}
             onClick=${() => update({ findOpen: !app.findOpen })}
           />
-          <${IconButton}
-            name="chart"
-            label=${t("Session details")}
-            onClick=${() =>
-              update({ modal: { type: "details", session: current } })}
-          />
+          ${app.user?.role === "user"
+            ? html`<${BudgetWeekly} budget=${app.budget} />`
+            : html`<${IconButton}
+                name="chart"
+                label=${t("Session details")}
+                onClick=${() => update({ modal: { type: "details", session: current } })}
+              />`}
           <${IconButton}
             name="more"
             label=${t("Session options")}

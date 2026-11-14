@@ -22,6 +22,7 @@ import {
   imageName,
 } from "./attachments.js";
 import { sessionReasoning, sessionModel, reasoningLabel } from "./models.js";
+import { BudgetBlockedDialog } from "./budget-ui.js";
 import { t, msg, formatNumber } from "./i18n.js";
 
 // Office, Numbers and LibreOffice put a picture of the selection beside its
@@ -42,6 +43,7 @@ export function Composer({
 }) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [blockedOpen, setBlockedOpen] = useState(false);
   const [images, setImages] = useState([]);
   const [attaching, setAttaching] = useState(false);
   const [loadingImages, setLoadingImages] = useState(true);
@@ -141,6 +143,10 @@ export function Composer({
   }, [draft]);
   async function send(e) {
     e?.preventDefault();
+    if (app.budget?.blocked) {
+      setBlockedOpen(true);
+      return;
+    }
     const submittedDraft = currentDraft.current;
     const text = submittedDraft.trim();
     const attachments = currentImages.current;
@@ -192,7 +198,10 @@ export function Composer({
         consumePendingImages(savedKey, attachments).catch(() => {});
       }
     } catch (error) {
-      fail(error);
+      if (error.code === "budget_exceeded") {
+        setBlockedOpen(true);
+        update({ budget: { ...(app.budget || {}), blocked: true } });
+      } else fail(error);
     } finally {
       setSending(false);
       submission.current = false;
@@ -497,5 +506,6 @@ export function Composer({
             </button>`}
       </div>
     </div>
+    ${blockedOpen && html`<${BudgetBlockedDialog} budget=${app.budget} onClose=${() => setBlockedOpen(false)} />`}
   </form>`;
 }

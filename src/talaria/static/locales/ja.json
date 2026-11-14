@@ -735,5 +735,12 @@
   "Weekly": "週間",
   "Your budget": "あなたの予算",
   "Your budget limit has been reached. New messages are blocked until an administrator changes your budget.": "予算上限に達しました。管理者が変更するまで新しいメッセージはブロックされます。",
-  "Your weekly or monthly budget has been reached. Ask an administrator to increase it.": "週間または月間予算に達しました。管理者に増額を依頼してください。"
+  "Your weekly or monthly budget has been reached. Ask an administrator to increase it.": "週間または月間予算に達しました。管理者に増額を依頼してください。",
+  "Budget limit reached": "予算上限に達しました",
+  "Weekly budget usage": "週間予算の使用量",
+  "Press Enter to apply": "Enter で適用",
+  "soon": "まもなく",
+  "{count} days": "{count}日",
+  "{count} hours": "{count}時間",
+  "Your current turn can finish, but new messages are blocked until a budget resets or an administrator changes your limit.": "現在のターンは完了できますが、予算がリセットされるか管理者が上限を変更するまで新しいメッセージはブロックされます。"
 }

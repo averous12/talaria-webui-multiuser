@@ -72,7 +72,20 @@ def require_admin(request):
 async def users_listing(request: Request):
     require_admin(request)
     if request.method == "GET":
-        return JSONResponse({"users": request.app.state.users.list_public()})
+        from .budget import profile_usage, snapshot
+
+        users = []
+        for user in request.app.state.users.list_public():
+            if user["role"] == "user":
+                target = request.app.state.profiles.resolve(user["profile_id"])
+                user = {
+                    **user,
+                    "budget_usage": snapshot(
+                        user, await profile_usage(target.state.hermes)
+                    ),
+                }
+            users.append(user)
+        return JSONResponse({"users": users})
     data = await body(request)
     role = text_field(data, "role", 16, "user")
     profile_id = text_field(data, "profile_id", 32, "") or None

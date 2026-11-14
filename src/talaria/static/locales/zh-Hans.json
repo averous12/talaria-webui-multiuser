@@ -735,5 +735,12 @@
   "Weekly": "每周",
   "Your budget": "你的预算",
   "Your budget limit has been reached. New messages are blocked until an administrator changes your budget.": "你的预算上限已达到。在管理员更改预算前，新消息将被阻止。",
-  "Your weekly or monthly budget has been reached. Ask an administrator to increase it.": "你的每周或每月预算已达到。请管理员提高预算。"
+  "Your weekly or monthly budget has been reached. Ask an administrator to increase it.": "你的每周或每月预算已达到。请管理员提高预算。",
+  "Budget limit reached": "已达到预算上限",
+  "Weekly budget usage": "每周预算使用量",
+  "Press Enter to apply": "按 Enter 应用",
+  "soon": "即将",
+  "{count} days": "{count} 天",
+  "{count} hours": "{count} 小时",
+  "Your current turn can finish, but new messages are blocked until a budget resets or an administrator changes your limit.": "当前回合可以完成，但在预算重置或管理员更改上限前，新消息将被阻止。"
 }

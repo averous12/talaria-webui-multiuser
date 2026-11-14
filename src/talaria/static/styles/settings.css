@@ -496,6 +496,117 @@
 .agent-presentation-editor {
   padding-top: 4px;
 }
+.budget-rings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 4px 0 8px;
+}
+.budget-rings.compact {
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0;
+}
+.budget-ring {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  min-width: 86px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.budget-ring.compact {
+  min-width: 60px;
+  font-size: 9px;
+}
+.budget-ring svg {
+  display: block;
+  transform: rotate(-90deg);
+}
+.budget-ring-track {
+  stroke: var(--line);
+}
+.budget-ring-value {
+  stroke: var(--accent);
+  transition: stroke-dashoffset 240ms ease;
+}
+.budget-ring-value-label {
+  position: absolute;
+  top: 25px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 650;
+}
+.budget-ring.compact .budget-ring-value-label {
+  top: 16px;
+  font-size: 9px;
+}
+.budget-ring strong {
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 600;
+}
+.budget-ring small {
+  margin-top: 2px;
+  color: var(--faint);
+  font-size: 9px;
+}
+.admin-user-budget {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+  min-width: 190px;
+}
+.budget-input-row {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+.budget-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.budget-input input {
+  width: 92px;
+  min-height: 30px;
+  padding: 6px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: right;
+}
+.budget-input input:focus {
+  outline: 2px solid var(--accent-soft);
+  border-color: var(--accent);
+}
+.budget-input-row small {
+  color: var(--faint);
+  font-size: 9px;
+}
+.user-budget .budget-rings {
+  justify-content: flex-start;
+}
+.budget-blocked {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+.budget-chat-widget {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 42px;
+}
+.budget-chat-widget .budget-ring {
+  min-width: 48px;
+}
+
 .icon-picker {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));

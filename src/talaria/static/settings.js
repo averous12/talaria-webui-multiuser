@@ -18,6 +18,7 @@ import { notificationPermission, requestNotificationPermission } from "./notific
 import { enableBackgroundNotifications, backgroundNotificationStatus } from "./push.js";
 import { LanguageSelector } from "./language.js";
 import { statusLabel } from "./content.js";
+import { BudgetRings } from "./budget-ui.js";
 
 const sections = [
   ["agent", "spark", msg("Your agent")],
@@ -153,7 +154,7 @@ function UserBudget({ app }) {
   if (app.user?.role === "admin" || !budget?.configured) return null;
   return html`<section class=${`setting-section user-budget ${budget.blocked ? "budget-blocked" : ""}`}>
     <div class="section-heading"><h4>${t("Your budget")}</h4><span class="default-badge">${budget.blocked ? t("Blocked") : t("Active")}</span></div>
-    <div class="budget-percentages"><span>${t("Weekly")}: <strong>${budget.weekly_percent}%</strong></span><span>${t("Monthly")}: <strong>${budget.monthly_percent}%</strong></span></div>
+    <div class="budget-percentages"><${BudgetRings} budget=${budget} /></div>
     ${budget.blocked && html`<p class="field-help">${t("Your budget limit has been reached. New messages are blocked until an administrator changes your budget.")}</p>`}
   </section>`;
 }
@@ -369,7 +370,10 @@ function Users({ app }) {
           </div>
           <div class="user-actions">
             <span class=${`status-badge ${user.role === "admin" ? "positive" : ""}`}>${t(user.role)}</span>
-            ${user.role === "user" && html`<label class="budget-input">${t("Monthly budget (IDR)")}<input type="number" min="0" step="1" value=${user.monthly_budget_micro_idr == null ? "" : user.monthly_budget_micro_idr / 1000000} onChange=${(e) => setUserBudget(user, e.target.value)} disabled=${budgetBusy === user.id} /></label>`}
+            ${user.role === "user" && html`<div class="admin-user-budget">
+              <div class="budget-input-row"><label class="budget-input">${t("Monthly budget (IDR)")}<input type="number" min="0" step="1" value=${user.monthly_budget_micro_idr == null ? "" : user.monthly_budget_micro_idr / 1000000} placeholder="0" onKeyDown=${(e) => { if (e.key === "Enter") { e.preventDefault(); setUserBudget(user, e.currentTarget.value); } }} disabled=${budgetBusy === user.id} /></label><small>${t("Press Enter to apply")}</small></div>
+              ${user.budget_usage?.configured && html`<${BudgetRings} budget=${user.budget_usage} compact />`}
+            </div>`}
             <button class="button secondary" disabled=${user.id === app.user.id} onClick=${() => toggle(user)}>${user.enabled ? t("Disable") : t("Enable")}</button>
           </div>
         </div>`)}

@@ -103,7 +103,15 @@ async def profile_usage(client, now=None):
     return totals
 
 
-def snapshot(user, usage):
+def _reset_iso(value):
+    return value.astimezone(dt.UTC).isoformat() if value else None
+
+
+def snapshot(user, usage, now=None):
+    now = now or dt.datetime.now(dt.UTC)
+    week_start, month_start = windows(now)
+    next_week = week_start + dt.timedelta(days=7)
+    next_month = (month_start.replace(day=28) + dt.timedelta(days=4)).replace(day=1)
     monthly = user.get("monthly_budget_micro_idr")
     if type(monthly) is not int or monthly <= 0:
         return {
@@ -112,6 +120,8 @@ def snapshot(user, usage):
             "weekly_percent": None,
             "blocked": False,
             "unknown_sessions": usage["unknown_sessions"],
+            "weekly_resets_at": _reset_iso(next_week),
+            "monthly_resets_at": _reset_iso(next_month),
         }
     weekly = monthly // 4
     month_percent = min(100, usage["monthly_micro_idr"] * 100 / monthly)
@@ -122,6 +132,8 @@ def snapshot(user, usage):
         "weekly_percent": round(week_percent, 2),
         "blocked": usage["monthly_micro_idr"] >= monthly or usage["weekly_micro_idr"] >= weekly,
         "unknown_sessions": usage["unknown_sessions"],
+        "weekly_resets_at": _reset_iso(next_week),
+        "monthly_resets_at": _reset_iso(next_month),
     }
 
 

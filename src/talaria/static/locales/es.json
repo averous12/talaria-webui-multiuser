@@ -761,5 +761,12 @@
   "Weekly": "Semanal",
   "Your budget": "Tu presupuesto",
   "Your budget limit has been reached. New messages are blocked until an administrator changes your budget.": "Has alcanzado el límite de tu presupuesto. Los mensajes nuevos están bloqueados hasta que un administrador lo cambie.",
-  "Your weekly or monthly budget has been reached. Ask an administrator to increase it.": "Has alcanzado tu presupuesto semanal o mensual. Pide a un administrador que lo aumente."
+  "Your weekly or monthly budget has been reached. Ask an administrator to increase it.": "Has alcanzado tu presupuesto semanal o mensual. Pide a un administrador que lo aumente.",
+  "Budget limit reached": "Límite de presupuesto alcanzado",
+  "Weekly budget usage": "Uso del presupuesto semanal",
+  "Press Enter to apply": "Pulsa Intro para aplicar",
+  "soon": "pronto",
+  "{count} days": "{count} días",
+  "{count} hours": "{count} horas",
+  "Your current turn can finish, but new messages are blocked until a budget resets or an administrator changes your limit.": "El turno actual puede terminar, pero los mensajes nuevos están bloqueados hasta que se restablezca el presupuesto o un administrador cambie el límite."
 }

@@ -61,6 +61,7 @@
   "Branching failed and the unfinished copy could not be removed. It remains in your session list.": "Branching failed and the unfinished copy could not be removed. It remains in your session list.",
   "Browser notifications are enabled.": "Browser notifications are enabled.",
   "Browser storage is unavailable. Try again or enable storage for Talaria.": "Browser storage is unavailable. Try again or enable storage for Talaria.",
+  "Budget limit reached": "Budget limit reached",
   "Build": "Build",
   "Cache read tokens": "Cache read tokens",
   "Cache write tokens": "Cache write tokens",
@@ -380,6 +381,7 @@
   "Preparing file download": "Preparing file download",
   "Preparing the complete transcript…": "Preparing the complete transcript…",
   "Preparing update…": "Preparing update…",
+  "Press Enter to apply": "Press Enter to apply",
   "Preview shortened": "Preview shortened",
   "Previous match": "Previous match",
   "Priced models": "Priced models",
@@ -664,6 +666,7 @@
   "Web UI": "Web UI",
   "Web searches today": "Web searches today",
   "Weekly": "Weekly",
+  "Weekly budget usage": "Weekly budget usage",
   "Weekly remaining": "Weekly remaining",
   "Working": "Working",
   "Working checkout": "Working checkout",
@@ -687,6 +690,7 @@
   "Your answer": "Your answer",
   "Your budget": "Your budget",
   "Your budget limit has been reached. New messages are blocked until an administrator changes your budget.": "Your budget limit has been reached. New messages are blocked until an administrator changes your budget.",
+  "Your current turn can finish, but new messages are blocked until a budget resets or an administrator changes your limit.": "Your current turn can finish, but new messages are blocked until a budget resets or an administrator changes your limit.",
   "Your guidance": "Your guidance",
   "Your guidance arrived after the response finished. It is back in the message box.": "Your guidance arrived after the response finished. It is back in the message box.",
   "Your guidance arrived after the response finished. It is shown below.": "Your guidance arrived after the response finished. It is shown below.",
@@ -713,6 +717,7 @@
     "one": "searched {count} time",
     "other": "searched {count} times"
   },
+  "soon": "soon",
   "used {count} tool": {
     "one": "used {count} tool",
     "other": "used {count} tools"
@@ -721,10 +726,12 @@
     "one": "visited {count} page",
     "other": "visited {count} pages"
   },
+  "{count} days": "{count} days",
   "{count} failed": {
     "one": "{count} failed",
     "other": "{count} failed"
   },
+  "{count} hours": "{count} hours",
   "{count} input token · last request": {
     "one": "{count} input token · last request",
     "other": "{count} input tokens · last request"

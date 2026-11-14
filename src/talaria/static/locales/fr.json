@@ -761,5 +761,12 @@
   "Weekly": "Hebdomadaire",
   "Your budget": "Votre budget",
   "Your budget limit has been reached. New messages are blocked until an administrator changes your budget.": "Votre limite budgétaire est atteinte. Les nouveaux messages sont bloqués jusqu’à sa modification par un administrateur.",
-  "Your weekly or monthly budget has been reached. Ask an administrator to increase it.": "Votre budget hebdomadaire ou mensuel est atteint. Demandez à un administrateur de l’augmenter."
+  "Your weekly or monthly budget has been reached. Ask an administrator to increase it.": "Votre budget hebdomadaire ou mensuel est atteint. Demandez à un administrateur de l’augmenter.",
+  "Budget limit reached": "Limite budgétaire atteint",
+  "Weekly budget usage": "Utilisation du budget hebdomadaire",
+  "Press Enter to apply": "Appuyez sur Entrée pour appliquer",
+  "soon": "bientôt",
+  "{count} days": "{count} jours",
+  "{count} hours": "{count} heures",
+  "Your current turn can finish, but new messages are blocked until a budget resets or an administrator changes your limit.": "Le tour actuel peut se terminer, mais les nouveaux messages sont bloqués jusqu’à la réinitialisation du budget ou à sa modification par un administrateur."
 }
