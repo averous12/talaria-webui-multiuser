@@ -587,12 +587,6 @@
   min-width: 38px;
   display: block;
 }
-.budget-chat-percent {
-  color: var(--muted);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 650;
-}
 .budget-chat-widget .budget-ring strong,
 .budget-chat-widget .budget-ring small {
   display: none;

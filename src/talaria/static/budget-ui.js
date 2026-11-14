@@ -63,7 +63,6 @@ export function BudgetWeekly({ budget }) {
     onClick=${() => setOpen(!open)}
   >
     <${BudgetRing} label=${t("Weekly")} value=${value.weekly_percent} resetAt=${value.weekly_resets_at} size=${38} compact />
-    <span class="budget-chat-percent">${value.weekly_percent == null ? "—" : `${Math.round(value.weekly_percent)}%`}</span>
     ${open && html`<span class="budget-chat-tooltip" role="tooltip">
       ${t("Weekly budget usage")}: ${value.weekly_percent == null ? "—" : `${Math.round(value.weekly_percent)}%`} · ${countdown}
     </span>`}
