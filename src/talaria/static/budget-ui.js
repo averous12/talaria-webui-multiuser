@@ -30,11 +30,13 @@ function BudgetRing({ label, value, resetAt, size = 76, compact = false }) {
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - percent(value) / 100);
   return html`<div class=${`budget-ring ${compact ? "compact" : ""}`} role="img" aria-label=${`${label}: ${value == null ? "—" : `${value}%`}`}>
-    <svg width=${size} height=${size} viewBox="0 0 44 44" aria-hidden="true">
-      <circle class="budget-ring-track" cx="22" cy="22" r=${radius} fill="none" stroke-width=${stroke} />
-      <circle class="budget-ring-value" cx="22" cy="22" r=${radius} fill="none" stroke-width=${stroke} stroke-linecap="round" stroke-dasharray=${circumference} stroke-dashoffset=${offset} />
-    </svg>
-    <span class="budget-ring-value-label">${value == null ? "—" : `${Math.round(value)}%`}</span>
+    <div class="budget-ring-visual" style=${`--ring-size:${size}px`}>
+      <svg width=${size} height=${size} viewBox="0 0 44 44" aria-hidden="true">
+        <circle class="budget-ring-track" cx="22" cy="22" r=${radius} fill="none" stroke-width=${stroke} />
+        <circle class="budget-ring-value" cx="22" cy="22" r=${radius} fill="none" stroke-width=${stroke} stroke-linecap="round" stroke-dasharray=${circumference} stroke-dashoffset=${offset} />
+      </svg>
+      <span class="budget-ring-value-label">${value == null ? "—" : `${Math.round(value)}%`}</span>
+    </div>
     <strong>${label}</strong>
     <small>${countdown}</small>
   </div>`;
@@ -61,6 +63,7 @@ export function BudgetWeekly({ budget }) {
     onClick=${() => setOpen(!open)}
   >
     <${BudgetRing} label=${t("Weekly")} value=${value.weekly_percent} resetAt=${value.weekly_resets_at} size=${38} compact />
+    <span class="budget-chat-percent">${value.weekly_percent == null ? "—" : `${Math.round(value.weekly_percent)}%`}</span>
     ${open && html`<span class="budget-chat-tooltip" role="tooltip">
       ${t("Weekly budget usage")}: ${value.weekly_percent == null ? "—" : `${Math.round(value.weekly_percent)}%`} · ${countdown}
     </span>`}

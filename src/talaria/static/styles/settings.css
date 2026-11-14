@@ -520,7 +520,14 @@
   min-width: 60px;
   font-size: 9px;
 }
-.budget-ring svg {
+.budget-ring-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--ring-size);
+  height: var(--ring-size);
+}
+.budget-ring-visual svg {
   display: block;
   transform: rotate(-90deg);
 }
@@ -533,14 +540,17 @@
 }
 .budget-ring-value-label {
   position: absolute;
-  top: 25px;
+  inset: 0;
+  display: grid;
+  place-items: center;
   color: var(--text);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 650;
+  line-height: 1;
+  pointer-events: none;
 }
 .budget-ring.compact .budget-ring-value-label {
-  top: 16px;
-  font-size: 9px;
+  font-size: 8px;
 }
 .budget-ring strong {
   margin-top: 4px;
@@ -555,11 +565,14 @@
 }
 .budget-chat-widget {
   position: relative;
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 38px;
-  width: 38px;
-  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 42px;
+  height: 34px;
   padding: 0;
   border: 0;
   border-radius: 10px;
@@ -572,6 +585,13 @@
 }
 .budget-chat-widget .budget-ring {
   min-width: 38px;
+  display: block;
+}
+.budget-chat-percent {
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
 }
 .budget-chat-widget .budget-ring strong,
 .budget-chat-widget .budget-ring small {
