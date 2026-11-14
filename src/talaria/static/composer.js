@@ -425,7 +425,8 @@ export function Composer({
             attach([...e.target.files]);
             e.target.value = "";
           }}
-        /><button
+        />
+        ${app.user?.role !== "user" && html`<button
           class="model-button"
           type="button"
           aria-label=${t("Choose model")}
@@ -437,13 +438,13 @@ export function Composer({
         >
           <span class="model-caption">${displayedModel?.id || t("Configured model")}</span>
           <${Icon} name="chevron" size=${14} />
-        </button>
+        </button>`}
         <button
           class="model-button reasoning-button"
           type="button"
-          aria-label=${t("Choose reasoning")}
+          aria-label=${t("Thinking Effort")}
           aria-haspopup="dialog"
-          title=${t("Reasoning · {reasoning}", { reasoning: reasoningText })}
+          title=${t("Thinking Effort")}
           onClick=${onReasoning}
           disabled=${active || !app.connected}
         >

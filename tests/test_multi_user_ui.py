@@ -36,6 +36,10 @@ def test_regular_user_settings_are_limited_to_three_sections(browser, live_app):
         ]
         page.get_by_role("button", name="Close dialog").click()
         assert page.locator(".agent-switcher").count() == 0
+        assert page.get_by_role("button", name="Choose model", exact=True).count() == 0
+        assert page.get_by_role(
+            "button", name="Thinking Effort", exact=True
+        ).count() == 1
     finally:
         context.close()
 
