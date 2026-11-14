@@ -202,7 +202,8 @@ def service_worker(request: Request):
         "  const title = data.kind === 'clarification' ? 'Your agent needs input' : "
         "'Response complete';\n"
         "  const body = data.kind === 'clarification' ? (data.question || "
-        "'Your agent is waiting for your answer.') : 'Your response is ready.';\n"
+        "'Your agent is waiting for your answer.') : (data.snippet || "
+        "'Your response is ready.');\n"
         "  event.waitUntil(self.registration.showNotification(title, { body, data: { url: '"
         + base
         + "/' + (data.url || '') } }));\n"
@@ -223,19 +224,34 @@ def service_worker(request: Request):
     return PlainTextResponse(
         script,
         media_type="application/javascript",
-        headers={"Service-Worker-Allowed": f"{base}/"},
+        headers={
+            "Service-Worker-Allowed": f"{base}/",
+            "Cache-Control": "no-store",
+        },
     )
 
 
 def _payload(run_id, event, session=""):
     kind = event.get("event") if isinstance(event, dict) else None
     if kind == "run.completed":
-        return {
+        payload = {
             "kind": "completed",
             "run_id": run_id,
             "url": f"?session={session}" if session else "?session=",
         }
+        snippet = _response_snippet(event.get("output"))
+        if snippet:
+            payload["snippet"] = snippet
+        return payload
     if kind in {"talaria.clarification.request", "clarify.request"}:
         question = event.get("question") or event.get("prompt") or "Your agent needs input."
         return {"kind": "clarification", "run_id": run_id, "question": str(question)[:2000]}
     return None
+
+
+def _response_snippet(value):
+    if not isinstance(value, str):
+        return ""
+    text = " ".join(value.split())
+    text = text.replace("```", "").replace("**", "").replace("__", "")
+    return text[:240].rstrip() + ("…" if len(text) > 240 else "")

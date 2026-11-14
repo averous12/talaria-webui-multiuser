@@ -2,6 +2,8 @@ from contextlib import contextmanager
 
 import httpx
 
+from talaria.push import _payload
+
 
 @contextmanager
 def signed_in(url):
@@ -125,6 +127,20 @@ def test_push_service_worker_is_valid_javascript(live_app):
     assert response.headers["service-worker-allowed"] == "/"
     assert "\\\\n" not in script
     assert "self.registration.showNotification" in script
+
+
+def test_push_completion_payload_contains_response_snippet():
+    output = "**Final answer**\n\n" + ("x" * 300)
+    payload = _payload("run-1", {"event": "run.completed", "output": output}, "session-1")
+    assert payload["kind"] == "completed"
+    assert payload["snippet"].startswith("Final answer x")
+    assert len(payload["snippet"]) == 241
+    assert payload["snippet"].endswith("…")
+    assert "\\n" not in payload["snippet"]
+
+
+def test_push_completion_payload_falls_back_without_output():
+    assert "snippet" not in _payload("run-1", {"event": "run.completed"})
 
 
 def test_session_lifecycle(live_app):
