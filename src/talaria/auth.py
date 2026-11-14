@@ -44,25 +44,34 @@ def signature(settings, message: str) -> str:
     return hmac.new(settings.signing_key.encode(), message.encode(), "sha256").hexdigest()
 
 
-def issue_cookie(settings) -> str:
-    payload = f"{int(time.time())}.{secrets.token_hex(16)}"
+def issue_cookie(settings, user_id="1") -> str:
+    payload = f"{int(time.time())}.{user_id}.{secrets.token_hex(16)}"
     return f"{payload}.{signature(settings, payload)}"
 
 
-def authenticated(request: Request) -> bool:
+def cookie_user_id(request):
     value = request.cookies.get(request.app.state.cookie_name, "")
     try:
-        timestamp, nonce, sig = value.split(".")
+        timestamp, user_id, nonce, sig = value.split(".")
+        if not user_id.isdigit():
+            return None
         age = time.time() - int(timestamp)
-        return (
-            0 <= age < TTL
-            and hmac.compare_digest(
-                signature(request.app.state.settings, f"{timestamp}.{nonce}"), sig
-            )
-            and not request.app.state.revocations.contains(value)
-        )
+        if not 0 <= age < TTL:
+            return None
+        payload = f"{timestamp}.{user_id}.{nonce}"
+        if not hmac.compare_digest(signature(request.app.state.settings, payload), sig):
+            return None
+        if request.app.state.revocations.contains(value):
+            return None
+        user_id = int(user_id)
+        user = request.app.state.users.get(user_id)
+        return user_id if user and user["enabled"] else None
     except (ValueError, TypeError):
-        return False
+        return None
+
+
+def authenticated(request: Request) -> bool:
+    return cookie_user_id(request) is not None
 
 
 def csrf_token(request: Request) -> str:

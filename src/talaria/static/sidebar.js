@@ -16,6 +16,7 @@ import {
   selectSession,
   refreshSessions,
   fail,
+  effectiveAgent,
 } from "./store.js";
 import { SessionSearch } from "./session-search.js";
 import { activityLabel, activityStatus } from "./session-activity.js";
@@ -179,7 +180,7 @@ export function Sidebar({ app }) {
         onClick=${newConversation}
         aria-label=${t("Talaria home")}
       >
-        <${Mark} size=${30} /><span>Talaria</span> ${
+        <${Mark} size=${30} src=${app.branding?.logo_url} /><span>${app.branding?.product_name || "Talaria"}</span> ${
           app.environment === "development" &&
           html`<small class="environment-badge">${t("Dev")}</small>`
         }</button
@@ -195,7 +196,7 @@ export function Sidebar({ app }) {
         }}
       />
     </div>
-    <${ProfileSwitch} app=${app} />
+    ${app.user?.role === "admin" && html`<${ProfileSwitch} app=${app} />`}
     <button class="new-chat" onClick=${newConversation}>
       <${Icon} name="plus" size=${18} /><span>${t("New session")}</span
       ><kbd>⌘ N</kbd>
@@ -248,7 +249,7 @@ export function Sidebar({ app }) {
         class="profile-button"
         onClick=${() => update({ modal: "settings" })}
       >
-        <span class="avatar"><${Icon} name="spark" size=${17} /></span
+        <span class="avatar"><${Icon} name=${effectiveAgent(app).icon} size=${17} /></span
         ><span
           >${t("Settings")}<small
             ><span

@@ -20,6 +20,7 @@ class Settings:
     host: str = "127.0.0.1"
     port: int = 8766
     trusted_proxies: list[str] = field(default_factory=list)
+    branding_dir: str = ""
 
     @property
     def secure(self) -> bool:

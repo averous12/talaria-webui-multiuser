@@ -11,16 +11,25 @@ def text(value, limit=160):
     return value[:limit].strip() if isinstance(value, str) else ""
 
 
-def agent_identity(caps, extended):
+def agent_identity(caps, extended, branding=None):
     caps = caps if isinstance(caps, dict) else {}
     agent = caps.get("agent")
     name = text(agent.get("name"), 80) if isinstance(agent, dict) else ""
     name = name or text(caps.get("agent_name"), 80)
     extension_name = text((extended.get("agent") or {}).get("name"), 80)
-    return {
-        "name": name or extension_name or "Hermes",
-        "name_source": "hermes" if name else "extension" if extension_name else "fallback",
-    }
+    fallback = ""
+    if (branding or {}).get("agent_name_mode") == "brand":
+        fallback = text((branding or {}).get("agent_name"), 80)
+    selected = fallback or name or extension_name or "Hermes"
+    if fallback:
+        source = "branding"
+    elif name:
+        source = "hermes"
+    elif extension_name:
+        source = "extension"
+    else:
+        source = "fallback"
+    return {"name": selected, "name_source": source}
 
 
 def readiness_info(health):

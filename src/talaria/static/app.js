@@ -50,6 +50,8 @@ import { MessageAction } from "./message-actions.js";
 import { sessionModel, sessionReasoning } from "./models.js";
 import { restoreRuns } from "./runs.js";
 import { observePage } from "./page-lifecycle.js";
+import { notificationPermission, showNotificationForTransition } from "./notifications.js";
+import { enableBackgroundNotifications, backgroundNotificationStatus } from "./push.js";
 import { Startup } from "./startup.js";
 import { LanguageSelector } from "./language.js";
 import { t, useLanguage } from "./i18n.js";
@@ -57,7 +59,14 @@ import { sourceLabel } from "./content.js";
 
 export { state, update, openSession, refreshSessions } from "./store.js";
 
-function Login({ development }) {
+function BrandMark({ branding, size }) {
+  return branding?.logo_url
+    ? html`<img class="brand-mark brand-image" width=${size} height=${size} src=${branding.logo_url} alt="" />`
+    : html`<${Mark} size=${size} />`;
+}
+
+function Login({ development, branding }) {
+  const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -66,7 +75,7 @@ function Login({ development }) {
     setBusy(true);
     setError("");
     try {
-      await api("/login", { method: "POST", body: { password } });
+      await api("/login", { method: "POST", body: { username, password } });
       await initialize();
     } catch (e) {
       setError(e.message);
@@ -76,14 +85,20 @@ function Login({ development }) {
   }
   return html`<main class="login-page">
     <div class="login-brand">
-      <${Mark} size=${42} /><span>Talaria</span>
+      <${BrandMark} branding=${branding} size=${42} /><span>${branding.product_name}</span>
       ${development && html`<small class="environment-badge">${t("Dev")}</small>`}
     </div>
     <div class="login-card">
       <h1>${t("Sign in")}</h1>
       <form onSubmit=${submit}>
-        <label class="field"
-          >${t("Password")}<input
+        <label class="field">${t("Username")}<input
+            type="text"
+            value=${username}
+            onInput=${(e) => setUsername(e.target.value)}
+            autocomplete="username"
+            required
+        /></label>
+        <label class="field">${t("Password")}<input
             type="password"
             value=${password}
             onInput=${(e) => setPassword(e.target.value)}
@@ -109,9 +124,9 @@ function Login({ development }) {
   </main>`;
 }
 
-function Welcome() {
+function Welcome({ app }) {
   return html`<div class="welcome">
-    <div class="welcome-mark"><${Mark} size=${49} /></div>
+    <div class="welcome-mark"><${BrandMark} branding=${app.branding} size=${49} /></div>
     <h1>${t("New session")}</h1>
   </div>`;
 }
@@ -154,6 +169,7 @@ function App() {
   const [reasoningOpen, setReasoningOpen] = useState(false);
   const [suggestion, setSuggestion] = useState(null);
   const restored = useRef(false);
+  const notificationRuns = useRef(null);
   useEffect(observePage, []);
   useEffect(() => {
     const shortcuts = new Map([
@@ -205,6 +221,34 @@ function App() {
       restoreRuns();
     }
   }, [app.connected, demo]);
+  useEffect(() => {
+    if (!app.connected || demo || notificationPermission() !== "granted") return;
+    backgroundNotificationStatus().then((status) => {
+      if (status === "default") enableBackgroundNotifications().catch(() => {});
+    });
+  }, [app.connected, demo]);
+  useEffect(() => {
+    const runs = app.lives || {};
+    if (!notificationRuns.current) {
+      notificationRuns.current = runs;
+      return;
+    }
+    const previous = notificationRuns.current;
+    notificationRuns.current = runs;
+    for (const [sid, next] of Object.entries(runs)) {
+      const noticeSession = app.sessions.find((session) => session.id === sid) ||
+        (sid === app.active ? app.sessionDetails : null) || {};
+      showNotificationForTransition(sid, previous[sid], next, noticeSession);
+    }
+  }, [app.lives, app.sessions, app.sessionDetails, app.active]);
+  useEffect(() => {
+    const selectSession = (event) => {
+      const sid = event.detail?.sid;
+      if (sid) openSession(sid);
+    };
+    window.addEventListener("talaria:notification-click", selectSession);
+    return () => window.removeEventListener("talaria:notification-click", selectSession);
+  }, []);
   const current = {
     id: app.active,
     title: t("Session"),
@@ -214,7 +258,7 @@ function App() {
   const close = () => update({ modal: null });
   if (app.auth === null || !language.ready) return html`<${Startup} />`;
   if (!app.auth)
-    return html`<${Login} development=${app.environment === "development"} />`;
+    return html`<${Login} development=${app.environment === "development"} branding=${app.branding} />`;
   return html`<div class="app-shell">
     <${Sidebar} app=${app} />${app.sidebar &&
     html`<button
@@ -299,7 +343,7 @@ function App() {
       </div>`}
       ${app.active || commands.length
         ? html`<${Conversation} key=${app.active} app=${app} commands=${app.searchWindow ? [] : commands} onDismissCommand=${commandActivity.dismiss} noChat=${noChat} external=${external} />`
-        : html`<${Welcome} />`}
+        : html`<${Welcome} app=${app} />`}
       ${app.searchWindow
         ? html`<div class="child-return"><span>${t("Search result · surrounding messages")}</span>
             <button class="text-button" onClick=${() => openSession(app.active)}>${t("View latest messages")}</button></div>`

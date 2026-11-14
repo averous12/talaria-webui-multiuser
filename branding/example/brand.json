@@ -1,0 +1,17 @@
+{
+  "product_name": "Aurora Desk",
+  "short_name": "Aurora",
+  "description": "A branded web workspace for Hermes Agent.",
+  "agent_name": "Aurora",
+  "agent_name_mode": "brand",
+  "theme_color": "#102030",
+  "background_color": "#f7f9fc",
+  "assets": {
+    "logo": "logo.svg",
+    "favicon": "favicon.svg",
+    "apple_touch_icon": "icons/apple-touch-icon.png",
+    "icon_192": "icons/icon-192.png",
+    "icon_512": "icons/icon-512.png",
+    "maskable_icon": "icons/maskable-512.png"
+  }
+}

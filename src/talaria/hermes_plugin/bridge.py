@@ -134,8 +134,32 @@ def rewind(db, sid, data):
     return {"ok": True, "removed": result["rewound_count"]}
 
 
+def _register_artifact_routes(app, adapter):
+    if app.get("talaria.webui.artifact_routes_registered"):
+        return
+
+    async def dispatch_request(request):
+        return await dispatch(request, adapter)
+
+    prefixes = (PREFIX, f"{PREFIX}/profiles/{{profile}}", f"/p/{{profile}}{PREFIX}")
+    was_frozen = app.router.frozen
+    if was_frozen:
+        app.router._frozen = False
+    try:
+        for prefix in prefixes:
+            app.router.add_get(
+                f"{prefix}/sessions/{{session_id}}/{{message_id}}/artifact",
+                dispatch_request,
+            )
+        app["talaria.webui.artifact_routes_registered"] = True
+    finally:
+        if was_frozen:
+            app.router._frozen = True
+
+
 def wire(app, adapter, **kwargs):
     if app.get("talaria.webui.registered"):
+        _register_artifact_routes(app, adapter)
         return
     if app.frozen or app.router.frozen or app.on_cleanup.frozen:
         log.warning(

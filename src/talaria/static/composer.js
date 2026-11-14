@@ -12,7 +12,7 @@ import {
 } from "./lib.js";
 import { useCommands } from "./commands.js";
 import { sendMessage, stopRun, running } from "./runs.js";
-import { fail, supports, navigationVersion, state, update } from "./store.js";
+import { fail, supports, navigationVersion, state, update, effectiveAgent } from "./store.js";
 import {
   prepareImage,
   beginPendingImages,
@@ -51,6 +51,7 @@ export function Composer({
   const submission = useRef(false);
   const textarea = useRef();
   const input = useRef();
+  const agentName = effectiveAgent(app).name;
   const active = running(app.active, app.lives);
   const live = app.lives[app.active];
   const displayedModel = model || app.defaultModel;
@@ -363,13 +364,13 @@ export function Composer({
     <div class="composer-input">
       <textarea
         ref=${textarea}
-        aria-label=${t("Message Hermes")}
+        aria-label=${t("Message {name}", { name: agentName })}
         aria-autocomplete="list"
         aria-controls=${commands.expanded ? "command-picker" : undefined}
         aria-activedescendant=${commands.expanded ? commands.option : undefined}
         placeholder=${active && live.clarification ? t("Answer your agent’s question…")
           : active && live.approval ? t("Answer the approval request to continue…")
-            : t("Message Hermes")}
+            : t("Message {name}", { name: agentName })}
         value=${draft}
         rows="1"
         onInput=${(e) => {

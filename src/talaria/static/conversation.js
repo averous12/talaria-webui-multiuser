@@ -35,6 +35,7 @@ import {
   supports,
   loadOlderMessages,
   update,
+  effectiveAgent,
 } from "./store.js";
 import { guidanceText, isGuidance, isNotice, isRecoveryPrompt, plainContent, sourceLabel, userMessage } from "./content.js";
 import {
@@ -89,6 +90,7 @@ function Message({
   parts = null,
   responseStatus = null,
   agentName = "Hermes",
+  agentIcon = "spark",
   matched = false,
   matchId = null,
   detailsEnabled = true,
@@ -259,7 +261,7 @@ function Message({
   >
     ${role !== "user" &&
     html`<div class="message-byline">
-      <span class="agent-avatar"><${Icon} name="spark" size=${14} /></span
+      <span class="agent-avatar"><${Icon} name=${agentIcon} size=${14} /></span
       ><span>${agentName}</span>${time && html`<time>${humanTime(time)}</time>`}
     </div>`}
     ${role === "user"
@@ -698,7 +700,9 @@ export function Conversation({ app, commands = [], onDismissCommand, noChat = fa
   }, []);
   const [olderBusy, setOlderBusy] = useState(false);
   const live = app.searchWindow ? null : app.lives[app.active];
-  const agentName = app.agent?.name?.trim() || "Hermes";
+  const presentation = effectiveAgent(app);
+  const agentName = presentation.name;
+  const agentIcon = presentation.icon;
   // The same history object unless part of it is showing live.
   const shown = useMemo(
     () => withoutLiveTurn(app.history, live),
@@ -807,6 +811,7 @@ export function Conversation({ app, commands = [], onDismissCommand, noChat = fa
             key=${messageKeys.get(m.id)}
             ...${m}
             agentName=${agentName}
+            agentIcon=${agentIcon}
             locale=${locale}
             formatLocale=${formatLocale}
             matched=${app.searchWindow && m.messageIds.some((id) => String(id) === String(app.searchWindow))}
@@ -818,7 +823,7 @@ export function Conversation({ app, commands = [], onDismissCommand, noChat = fa
             responseStatus=${m === savedTurn && !live.outcomeUnknown ? live.status : null}
           />`,
       ),
-    [items, messageKeys, canChange, canBranch, app.loading, savedTurn, live?.status, live?.outcomeUnknown, agentName, app.searchWindow, locale, formatLocale],
+    [items, messageKeys, canChange, canBranch, app.loading, savedTurn, live?.status, live?.outcomeUnknown, agentName, agentIcon, app.searchWindow, locale, formatLocale],
   );
   async function loadEarlier() {
     if (olderBusy) return;

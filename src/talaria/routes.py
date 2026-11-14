@@ -9,7 +9,8 @@ from starlette._utils import get_route_path
 from starlette.requests import Request
 from starlette.responses import JSONResponse, StreamingResponse
 
-from . import __version__, auth
+from . import __version__, auth, branding
+from .agent_presentation import DEFAULT_PRESENTATION, validate_presentation
 from .content import MAX_CHAT_BODY, REASONING, image_inputs
 from .extensions import PREFIX, Extensions, change_session, discover, numeric
 from .hermes import (
@@ -56,6 +57,98 @@ def text_field(data: dict, key: str, limit: int, default: str = "") -> str:
     return value
 
 
+def current_user(request):
+    return request.app.state.users.get(auth.cookie_user_id(request))
+
+
+def require_admin(request):
+    user = current_user(request)
+    if not user or user["role"] != "admin":
+        raise APIError("Administrator access is required.", 403, "forbidden")
+    return user
+
+
+async def users_listing(request: Request):
+    require_admin(request)
+    if request.method == "GET":
+        return JSONResponse({"users": request.app.state.users.list_public()})
+    data = await body(request)
+    role = text_field(data, "role", 16, "user")
+    profile_id = text_field(data, "profile_id", 32, "") or None
+    if role == "user" and not profile_id:
+        raise APIError("Assign this user to one Hermes profile.", 400)
+    profiles = request.app.state.profiles
+    if role == "user" and profile_id not in {item["id"] for item in profiles.public()["profiles"]}:
+        raise APIError("Choose an existing Hermes profile.", 400)
+    try:
+        user = request.app.state.users.create(
+            text_field(data, "username", 64).strip(),
+            text_field(data, "password", 1024),
+            role,
+            profile_id,
+        )
+    except ValueError as exc:
+        messages = {
+            "username": "Choose a valid username.",
+            "password": "Passwords must contain 4 to 1024 characters.",
+            "role": "Choose admin or user as the role.",
+            "username_exists": "That username is already in use.",
+        }
+        raise APIError(messages.get(str(exc), "Could not create the user."), 400) from exc
+    return JSONResponse(user, status_code=201)
+
+
+async def user_update(request: Request):
+    require_admin(request)
+    try:
+        user_id = int(request.path_params["user_id"])
+    except ValueError as exc:
+        raise APIError("Invalid user.", 400) from exc
+    data = await body(request)
+    if set(data) - {"password", "enabled", "profile_id"} or not data:
+        raise APIError("Choose a password, profile, or enabled state.", 400)
+    try:
+        if "password" in data:
+            request.app.state.users.set_password(user_id, text_field(data, "password", 1024))
+        if "profile_id" in data:
+            profile_id = text_field(data, "profile_id", 32).strip()
+            valid_profiles = {
+                item["id"] for item in request.app.state.profiles.public()["profiles"]
+            }
+            if not profile_id or profile_id not in valid_profiles:
+                raise ValueError("profile")
+            user = request.app.state.users.get(user_id)
+            if user and user["role"] == "user":
+                request.app.state.users.assign_profile(user_id, profile_id)
+        if "enabled" in data:
+            if type(data["enabled"]) is not bool:
+                raise ValueError("enabled")
+            request.app.state.users.set_enabled(user_id, data["enabled"])
+    except ValueError as exc:
+        message = (
+            "The last administrator cannot be disabled."
+            if str(exc) == "last_admin"
+            else "Could not update the user."
+        )
+        raise APIError(message, 400) from exc
+    return JSONResponse(request.app.state.users.get(user_id))
+
+
+async def agent_presentation(request: Request):
+    user = current_user(request)
+    if user is None:
+        raise APIError("Please sign in to continue.", 401, "unauthenticated")
+    if request.method == "GET":
+        return JSONResponse(user["presentation"])
+    data = await body(request)
+    try:
+        value = validate_presentation(data)
+        value = request.app.state.users.set_presentation(user["id"], value)
+    except ValueError as exc:
+        raise APIError("Choose a valid agent name and icon.", 400) from exc
+    return JSONResponse(value)
+
+
 async def bootstrap(request: Request):
     logged_in = auth.authenticated(request)
     return JSONResponse(
@@ -66,11 +159,22 @@ async def bootstrap(request: Request):
             "csrf": auth.csrf_token(request) if logged_in else None,
             "connected": bool(request.app.state.hermes_key) if logged_in else False,
             "agent": agent_identity(
-                request.app.state.capabilities, request.app.state.extensions.features
+                request.app.state.capabilities,
+                request.app.state.extensions.features,
+                request.app.state.branding.public,
             )
             if logged_in
             else None,
+            "agent_presentation": (
+                current_user(request)["presentation"] if logged_in else DEFAULT_PRESENTATION
+            ),
+            "branding": branding.public_details(
+                request.app.state.branding, request.app.state.settings.base_path
+            ),
             "profile": request.app.state.profiles.describe(request.app.state.profile_id)
+            if logged_in
+            else None,
+            "user": request.app.state.users.get(auth.cookie_user_id(request))
             if logged_in
             else None,
             "profiles": request.app.state.profiles.public()["profiles"] if logged_in else [],
@@ -84,11 +188,17 @@ async def login(request: Request):
     address = state.limiter.address(request)
     if not state.limiter.allow(address):
         raise APIError("Too many attempts. Please try again in an hour.", 429)
+    username = text_field(data, "username", 64, "admin").strip()
     password = text_field(data, "password", 1024)
-    if not await asyncio.to_thread(auth.verify_password, password, state.settings.password_hash):
-        raise APIError("That password didn’t match. Please try again.", 401, "login_failed")
+    user = state.users.authenticate(username, password)
+    if user is None:
+        raise APIError(
+            "That username or password didn’t match. Please try again.",
+            401,
+            "login_failed",
+        )
     state.limiter.success(address)
-    cookie = auth.issue_cookie(state.settings)
+    cookie = auth.issue_cookie(state.settings, user["id"])
     response = JSONResponse({"ok": True})
     response.set_cookie(
         state.cookie_name,
@@ -463,6 +573,7 @@ async def start_run(request: Request):
         except APIError as exc:
             raise APIError("Hermes did not return a readable run identifier.") from exc
         state.profiles.attach(state, run_id)
+        state.push.bind_run(state.profile_id, run_id, sid)
     return JSONResponse(result, status_code=202)
 
 

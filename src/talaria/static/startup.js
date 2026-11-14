@@ -1,4 +1,5 @@
 import { html, Mark, useEffect, useRef, useState } from "./lib.js";
+import { state } from "./store.js";
 import { initialize } from "./store.js";
 import { t } from "./i18n.js";
 
@@ -42,7 +43,7 @@ export function Startup() {
     };
   }, []);
   return html`<div class="initial-loader">
-    <${Mark} size=${40} />
+    <${Mark} size=${40} src=${state.branding?.logo_url} />
     <span role="status">${failed ? t("Reconnecting to Talaria…") : t("Loading…")}</span>
     ${failed && html`<button class="button secondary" onClick=${() => retry.current()}>${t("Retry connection")}</button>`}
   </div>`;

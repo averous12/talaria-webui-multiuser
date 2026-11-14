@@ -16,6 +16,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from . import auth, config
+from .agent_presentation import DEFAULT_PRESENTATION, validate_presentation
 from .hermes import (
     MAX_STREAMS,
     PROFILE,
@@ -55,6 +56,8 @@ class Profiles:
         self.changing = set()
         self.writes = set()
         self.default_label = ""
+        self.default_presentation = dict(DEFAULT_PRESENTATION)
+        self.presentations = {}
         self.error = ""
         self.lock = asyncio.Lock()
         self.pending_runs = 0
@@ -66,6 +69,8 @@ class Profiles:
                 if data.get("version") != 1 or len(data.get("profiles", [])) >= MAX_PROFILES:
                     raise ValueError
                 self.default_label = str(data.get("default_label", ""))[:80]
+                if data.get("default_presentation"):
+                    self.default_presentation = validate_presentation(data["default_presentation"])
                 for record in data.get("profiles", []):
                     if (
                         not re.fullmatch(r"[0-9a-f]{32}", record["id"])
@@ -82,11 +87,30 @@ class Profiles:
                     record["url"] = config.validate_url(record["url"])
                     record.pop("hermes_home", None)
                     self.records[record["id"]] = record
+                    if record.get("presentation"):
+                        self.presentations[record["id"]] = validate_presentation(
+                            record["presentation"]
+                        )
             except (OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError):
                 self.records = {}
                 self.error = (
                     "Saved profiles could not be loaded. The initial connection is still available."
                 )
+
+    def presentation(self, profile_id):
+        if profile_id == "default":
+            return dict(self.default_presentation)
+        return dict(self.presentations.get(profile_id, DEFAULT_PRESENTATION))
+
+    async def save_presentation(self, profile_id, value):
+        value = validate_presentation(value)
+        async with self.lock:
+            if profile_id == "default":
+                self.default_presentation = value
+            else:
+                self.presentations[profile_id] = value
+                self.records[profile_id]["presentation"] = value
+            await self.persist(self.records)
 
     def describe(self, profile_id):
         if profile_id == "default":
@@ -147,6 +171,7 @@ class Profiles:
             {
                 "version": 1,
                 "default_label": self.default_label,
+                "default_presentation": self.default_presentation,
                 "profiles": list(records.values()),
             },
         )
@@ -251,10 +276,23 @@ class ProfileRouter:
             path = get_route_path(scope)
             if (
                 auth.authenticated(request)
-                and path not in {"/api/login", "/api/logout", "/api/profiles"}
+                and path not in {"/api/login", "/api/logout", "/api/profiles", "/api/users"}
                 and not path.startswith("/api/profiles/")
+                and not path.startswith("/api/users/")
             ):
-                profile_id = request.query_params.get("talaria_profile", "default")
+                user = request.app.state.users.get(auth.cookie_user_id(request))
+                requested = request.query_params.get("talaria_profile", "default")
+                profile_id = requested
+                if user and user["role"] != "admin":
+                    profile_id = user["profile_id"]
+                    if requested != "default" and requested != profile_id:
+                        return await JSONResponse(
+                            {
+                                "error": "This user is assigned to another profile.",
+                                "code": "forbidden",
+                            },
+                            status_code=403,
+                        )(scope, receive, send)
                 try:
                     app = self.profiles.resolve(profile_id)
                 except APIError as exc:
@@ -271,6 +309,9 @@ class ProfileRouter:
 
 
 async def listing(request):
+    user = request.app.state.users.get(auth.cookie_user_id(request))
+    if not user or user["role"] != "admin":
+        raise APIError("Administrator access is required.", 403, "forbidden")
     profiles = request.app.state.profiles
     if request.method in {"GET", "HEAD"}:
         return JSONResponse({**profiles.public(), "csrf": auth.csrf_token(request)})
@@ -326,6 +367,9 @@ async def listing(request):
 
 
 async def remove(request):
+    user = request.app.state.users.get(auth.cookie_user_id(request))
+    if not user or user["role"] != "admin":
+        raise APIError("Administrator access is required.", 403, "forbidden")
     profiles = request.app.state.profiles
     profile_id = request.path_params["profile_id"]
     if profile_id == "default":
@@ -351,7 +395,7 @@ async def remove(request):
                 )
                 profiles.apps.pop(profile_id, None)
                 profiles.inflight.pop(profile_id, None)
-                profiles.artifacts.delete_profile(profile_id)
+                profiles.app.state.artifacts.delete_profile(profile_id)
                 # If Talaria cannot forget the removed profile now, its rows age out.
                 with contextlib.suppress(StateUnavailable):
                     await asyncio.to_thread(

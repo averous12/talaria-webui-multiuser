@@ -111,6 +111,14 @@ const paths = {
   terminal: "m5 6 5 6-5 6m8 0h6",
   thought: "M15 14c.2-1 .7-1.7 1.5-2.5A5.5 5.5 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.8.8 1.3 1.5 1.5 2.5M9 18h6m-5 4h4",
   spark: "m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z",
+  orb: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18m0 4a5 5 0 1 0 0 10 5 5 0 0 0 0-10m0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6",
+  bot: "M9 8h6a4 4 0 0 1 4 4v5H5v-5a4 4 0 0 1 4-4m3-5v5m-5 4h.01m10 0h.01M8 17v3m8-3v3",
+  comet: "M5 19 17 7m-2-2 2-2 2 2-2 2M5 19l-2 2m5-5 3 3m5-13 4-1-1 4",
+  neural: "M9 4a3 3 0 0 0-3 3v.5A3.5 3.5 0 0 0 5 14a3 3 0 0 0 3 3h1v3h6v-3h1a3 3 0 0 0 3-3 3.5 3.5 0 0 0-1-6.5V7a3 3 0 0 0-3-3 3 3 0 0 0-3 1.5A3 3 0 0 0 9 4m3 2v12m-3-8h3m3-2h-3",
+  beacon: "M12 12m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0M4 12a8 8 0 0 1 16 0M7 12a5 5 0 0 1 10 0M12 14v7",
+  constellation: "M5 5l7 7 7-7M12 12l-7 7m7-7 7 7M5 5m-1.5 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0M19 5m-1.5 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0M12 12m-1.5 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0M5 19m-1.5 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0M19 19m-1.5 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0",
+  wave: "M3 12c3-7 6 7 9 0s6 7 9 0M3 18c3-5 6 5 9 0s6 5 9 0",
+  prism: "M6 4h12l3 6-9 10-9-10zM6 4l6 6 6-6M12 10v10M3 10h18",
   globe:
     "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M3 12h18M12 3c-5 5-5 13 0 18M12 3c5 5 5 13 0 18",
   file: "M14 2H5v20h14V7l-5-5v5h5M8 12h8M8 16h8",
@@ -138,7 +146,8 @@ export function Icon({ name, size = 20, ...props }) {
     <path d=${paths[name] || paths.spark} />
   </svg>`;
 }
-export function Mark({ size = 32 }) {
+export function Mark({ size = 32, src = "" }) {
+  if (src) return html`<img class="brand-mark brand-image" width=${size} height=${size} src=${src} alt="" />`;
   return html`<svg
     class="brand-mark"
     width=${size}

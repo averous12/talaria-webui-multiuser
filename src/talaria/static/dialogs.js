@@ -22,6 +22,7 @@ import {
   chooseModel,
   chooseReasoning,
   navigationVersion,
+  effectiveAgent,
 } from "./store.js";
 import { running } from "./runs.js";
 import {
@@ -139,7 +140,7 @@ export function Connection({
       if (save) {
         if (!creating) await connect();
         onClose();
-        toast(creating ? t("Profile added") : t("Connected to {name}", { name: state.agent.name }));
+        toast(creating ? t("Profile added") : t("Connected to {name}", { name: effectiveAgent(state).name }));
       } else setTested({ url, profile, key });
     } catch (e) {
       setError(e.message);

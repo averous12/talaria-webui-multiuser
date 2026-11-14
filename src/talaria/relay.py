@@ -3,6 +3,7 @@
 import asyncio
 import contextlib
 import json
+import logging
 import time
 from array import array
 from collections import deque
@@ -10,6 +11,8 @@ from dataclasses import dataclass, field
 from itertools import chain
 
 from .hermes import MAX_STREAMS, APIError, Hermes, object_result
+
+log = logging.getLogger(__name__)
 
 TERMINAL = {"completed", "failed", "cancelled", "interrupted"}
 TERMINAL_EVENTS = {f"run.{status}" for status in TERMINAL}
@@ -152,10 +155,18 @@ class Channel:
 
 
 class Relay:
-    def __init__(self, hermes: Hermes):
+    def __init__(self, hermes: Hermes, notifier=None):
         self.hermes = hermes
+        self.notifier = notifier
         self.channels: dict[str, Channel] = {}
 
+    async def publish(self, channel, event):
+        await channel.publish(event)
+        if self.notifier:
+            try:
+                await self.notifier(channel.run_id, event)
+            except Exception:
+                log.exception("Push notification scheduling failed")
     def attach(self, run_id: str) -> Channel:
         now = time.monotonic()
         for key, channel in list(self.channels.items()):
@@ -187,11 +198,11 @@ class Relay:
                     if kind == "run.failed" and event.get("error") == "unknown_execution":
                         # Hermes keeps this turn queued behind a turn lost in a restart.
                         continue
-                    await channel.publish(event)
+                    await self.publish(channel, event)
                     if kind in TERMINAL_EVENTS:
                         return
             except APIError:
-                await channel.publish({"event": "talaria.reconcile"})
+                await self.publish(channel, {"event": "talaria.reconcile"})
             # A lost stream is not a stopped run. Poll until Hermes confirms its final state.
             await self.poll(channel)
         finally:
@@ -210,24 +221,26 @@ class Relay:
                 if not isinstance(state, str):
                     raise APIError("Hermes returned an unreadable run status.")
                 if state in TERMINAL:
-                    await channel.publish({**status, "event": f"run.{state}"})
+                    await self.publish(channel, {**status, "event": f"run.{state}"})
                     return
                 if state == "unknown":
                     # A restart lost this turn. It stays unknown until someone discards it.
-                    await channel.publish({**status, "event": "run.unknown"})
+                    await self.publish(channel, {**status, "event": "run.unknown"})
                     return
                 waited = (last or {}).get("status") == "queued"
                 if state == "queued" and not waited:
-                    await channel.publish({"event": "run.queued"})
+                    await self.publish(channel, {"event": "run.queued"})
                 elif waited and state != "queued":
-                    await channel.publish({"event": "talaria.status", "text": ""})  # It started.
-                await publish_pending(channel, status, last)
+                    await self.publish(
+                        channel, {"event": "talaria.status", "text": ""}
+                    )  # It started.
+                await publish_pending(channel, status, last, self.publish)
                 last = status
             except APIError as exc:
                 if exc.status in {401, 403, 404}:
                     event = {"event": "talaria.unavailable", "message": exc.message}
                     # Hermes forgets a run some time after it ends.
-                    await channel.publish({**event, "forgotten": exc.status == 404})
+                    await self.publish(channel, {**event, "forgotten": exc.status == 404})
                     return
             await asyncio.sleep(2)
         await channel.publish(
@@ -270,7 +283,7 @@ class Relay:
         await asyncio.gather(*tasks, return_exceptions=True)
 
 
-async def publish_pending(channel, status, previous):
+async def publish_pending(channel, status, previous, publish):
     for key, waiting, requested, resolved in (
         ("approval", "waiting_for_approval", "approval.request", "approval.responded"),
         (
@@ -288,18 +301,19 @@ async def publish_pending(channel, status, previous):
             and current
             and status != previous
         ):
-            await channel.publish({**current, "event": requested})
+            await publish(channel, {**current, "event": requested})
         elif isinstance(prior, dict) and prior and not current:
-            await channel.publish({"event": resolved, "request_id": prior.get("request_id")})
+            await publish(channel, {"event": resolved, "request_id": prior.get("request_id")})
     # Hermes's session authority lists open prompts instead, settled by prompt ID.
     current, prior = pending_controls(status), pending_controls(previous)
     for prompt_id, prompt in current.items():
         if prompt != prior.get(prompt_id):
-            await channel.publish({**prompt, "event": f"{prompt['kind']}.request"})
+            await publish(channel, {**prompt, "event": f"{prompt['kind']}.request"})
     for prompt_id, prompt in prior.items():
         if prompt_id not in current:
             generation = prompt.get("execution_generation")
-            await channel.publish(
+            await publish(
+                channel,
                 {
                     "event": f"{prompt['kind']}.settled",
                     "prompt_id": prompt_id,

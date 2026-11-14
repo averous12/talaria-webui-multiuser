@@ -176,9 +176,23 @@ def asset_routes(immutable, directory):
 
 
 async def index(request):
-    # The document is tiny; cache the template per application, not per request.
-    base = html.escape(request.app.state.settings.base_path + "/", quote=True)
-    return HTMLResponse(request.app.state.index_html.replace("__TALARIA_BASE__", base))
+    state = request.app.state
+    base = html.escape(state.settings.base_path + "/", quote=True)
+    brand = state.branding.public
+    assets = brand["assets"]
+    values = {
+        "__TALARIA_BASE__": base,
+        "__TALARIA_BRAND_NAME__": html.escape(brand["product_name"], quote=True),
+        "__TALARIA_BRAND_DESCRIPTION__": html.escape(brand["description"], quote=True),
+        "__TALARIA_THEME_COLOR__": brand["theme_color"],
+        "__TALARIA_BRAND_FAVICON__": f"{base}branding/{assets['favicon']}",
+        "__TALARIA_BRAND_MANIFEST__": f"{base}branding/manifest",
+        "__TALARIA_BRAND_APPLE_ICON__": f"{base}branding/{assets['apple_touch_icon']}",
+    }
+    document = state.index_html
+    for token, value in values.items():
+        document = document.replace(token, value)
+    return HTMLResponse(document)
 
 
 async def robots(request):

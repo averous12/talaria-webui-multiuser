@@ -3,6 +3,33 @@
     transform: rotate(360deg);
   }
 }
+@keyframes simple-working-opacity {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+:root {
+  --talaria-motion-mode: full;
+}
+:root[data-motion="simple"] {
+  --talaria-motion-mode: simple;
+}
+:root[data-motion="simple"] .spinner {
+  border: 2px solid var(--accent-soft);
+  border-right-color: var(--accent);
+  animation: rotate 0.9s linear infinite;
+}
+:root[data-motion="simple"] .tool-card.working .tool-verb,
+:root[data-motion="simple"] .reasoning.working .tool-verb,
+:root[data-motion="simple"] .activity.working > summary .tool-verb {
+  background: none;
+  color: var(--muted);
+  animation: simple-working-opacity 0.9s ease-in-out infinite alternate;
+}
 @keyframes shimmer {
   to {
     background-position: -200% 0;

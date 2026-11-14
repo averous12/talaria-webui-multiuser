@@ -4,7 +4,7 @@ import { siteURL } from "./paths.js";
 import { api } from "./api.js";
 import { Dialog, Connection } from "./dialogs.js";
 import { ExtendedAccess } from "./access-settings.js";
-import { update, refreshProfiles, toast } from "./store.js";
+import { update, refreshProfiles, toast, effectiveAgent } from "./store.js";
 import { msg, t } from "./i18n.js";
 
 const profileHref = (id) => siteURL(`?profile=${encodeURIComponent(id)}`);
@@ -18,7 +18,7 @@ export function ProfileSwitch({ app }) {
   >
     <${Icon} name="branch" size=${17} /><span
       ><small>${t("Profile")}</small
-      ><strong>${app.profile?.label || app.agent.name}</strong></span
+      ><strong>${app.profile?.label || effectiveAgent(app).name}</strong></span
     ><${Icon} name="chevron" size=${15} />
   </button>`;
 }

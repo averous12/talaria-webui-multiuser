@@ -431,11 +431,11 @@
   outline-offset: 7px;
   border-radius: 4px;
 }
-::highlight(talaria-find) {
+mark.talaria-find-highlight {
   color: var(--accent-text);
   background: var(--accent-soft);
 }
-::highlight(talaria-current) {
+mark.talaria-find-highlight.is-current {
   color: var(--on-accent);
   background: var(--accent);
 }

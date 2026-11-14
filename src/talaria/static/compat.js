@@ -2,6 +2,12 @@
 (function () {
   "use strict";
 
+  var simpleMotion = false;
+  if (typeof CSS === "undefined" || typeof CSS.highlights === "undefined" || typeof Highlight === "undefined") {
+    simpleMotion = true;
+  }
+  window.TalariaCompat = { simpleMotion: simpleMotion };
+  document.documentElement.dataset.motion = simpleMotion ? "simple" : "full";
   if (typeof AbortSignal.any !== "function") {
     AbortSignal.any = function (signals) {
       var controller = new AbortController();

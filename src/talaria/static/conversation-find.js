@@ -50,6 +50,46 @@ function matches(root, query, cache) {
   return ranges;
 }
 
+function clearLegacyHighlights(root) {
+  for (const mark of root?.querySelectorAll("mark.talaria-find-highlight") || []) {
+    mark.replaceWith(document.createTextNode(mark.textContent));
+  }
+}
+
+function wrapTextPart(node, start, end, current) {
+  if (end <= start || !node.parentNode) return;
+  const selected = node.splitText(start);
+  const tail = selected.splitText(end - start);
+  const mark = document.createElement("mark");
+  mark.className = `talaria-find-highlight${current ? " is-current" : ""}`;
+  mark.textContent = selected.textContent;
+  selected.replaceWith(mark);
+  void tail;
+}
+
+function applyLegacyHighlights(root, ranges, currentIndex) {
+  clearLegacyHighlights(root);
+  ranges.forEach((range, rangeIndex) => {
+    const walker = document.createTreeWalker(
+      range.commonAncestorContainer,
+      NodeFilter.SHOW_TEXT,
+    );
+    const nodes = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      try {
+        if (range.intersectsNode(node)) nodes.push(node);
+      } catch (_) {
+        // A detached node can disappear during streamed transcript updates.
+      }
+    }
+    for (const text of nodes) {
+      const start = text === range.startContainer ? range.startOffset : 0;
+      const end = text === range.endContainer ? range.endOffset : text.length;
+      wrapTextPart(text, start, end, rangeIndex === currentIndex);
+    }
+  });
+}
 function revealMatch(range, viewport) {
   const parent = range.startContainer.parentElement;
   let details = parent.closest("details");
@@ -141,12 +181,16 @@ export function ConversationFind({ app, root, onLoadEarlier, olderBusy, onReveal
     schedule();
   }, [query, schedule]);
   useEffect(() => {
-    if (globalThis.CSS?.highlights && globalThis.Highlight) {
+    const target = root.current;
+    const modernHighlights = globalThis.CSS?.highlights && globalThis.Highlight;
+    if (modernHighlights) {
       CSS.highlights.set("talaria-find", new Highlight(...ranges));
       CSS.highlights.set(
         "talaria-current",
         new Highlight(...(ranges[index] ? [ranges[index]] : [])),
       );
+    } else {
+      applyLegacyHighlights(target, ranges, index);
     }
     const range = ranges[index];
     const parent = range?.startContainer.parentElement;
@@ -160,8 +204,12 @@ export function ConversationFind({ app, root, onLoadEarlier, olderBusy, onReveal
       move.current = false;
     }
     return () => {
-      CSS.highlights?.delete("talaria-find");
-      CSS.highlights?.delete("talaria-current");
+      if (modernHighlights) {
+        CSS.highlights.delete("talaria-find");
+        CSS.highlights.delete("talaria-current");
+      } else {
+        clearLegacyHighlights(target);
+      }
       article?.classList.remove("find-focus");
     };
   }, [ranges, index, root, onReveal]);

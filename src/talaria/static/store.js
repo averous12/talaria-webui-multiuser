@@ -4,6 +4,7 @@ import { migratePendingImages, withCachedImages } from "./attachments.js";
 import { selectedSession, selectedMessage, rememberSession } from "./session-navigation.js";
 import { historyWindow } from "./history-page.js";
 import { msg } from "./i18n.js";
+import { setNotificationBrand } from "./notifications.js";
 import { importBrowserChoices, modelChoice, modelInventory, reasoningChoice } from "./models.js";
 
 const listeners = new Set();
@@ -12,6 +13,14 @@ export function beforeHistoryUpdate(listener) {
   historyListeners.add(listener);
   return () => historyListeners.delete(listener);
 }
+export function effectiveAgent(app) {
+  const presentation = app.agentPresentation || {};
+  return {
+    name: presentation.name?.trim() || app.agent?.name?.trim() || "Hermes",
+    icon: presentation.icon || "spark",
+  };
+}
+
 export const state = {
   auth: null,
   connected: false,
@@ -47,6 +56,20 @@ export const state = {
   activity: {},
   readiness: { status: "unknown", issues: [] },
   agent: { name: "Hermes", name_source: "fallback" },
+  user: null,
+  agentPresentation: { name: "Hermes", icon: "orb" },
+  branding: {
+    product_name: "Talaria",
+    short_name: "Talaria",
+    description: "",
+    agent_name: "",
+    agent_name_mode: "hermes",
+    theme_color: "#fbfbf9",
+    background_color: "#fbfbf9",
+    logo_url: "",
+    favicon_url: "",
+    manifest_url: "",
+  },
   agentInfo: null,
   version: "",
   environment: "production",
@@ -131,12 +154,18 @@ export async function initialize(signal = new AbortController().signal) {
     signal.throwIfAborted();
     if (data.environment === "demo")
       await (await import("./demo.js")).enableDemo(signal, data.version, data.plugin_version);
+    setNotificationBrand(data.branding?.product_name);
     document.title =
-      data.environment === "development" ? "Talaria · Dev" : "Talaria";
+      data.environment === "development"
+        ? `${data.branding?.product_name || "Talaria"} · Dev`
+        : data.branding?.product_name || "Talaria";
     setCSRF(data.csrf || "");
     update({
       auth: data.authenticated,
       agent: data.agent || state.agent,
+      user: data.user || null,
+      agentPresentation: data.agent_presentation || state.agentPresentation,
+      branding: data.branding || state.branding,
       version: data.version,
       environment: data.environment || "production",
       profiles: data.profiles || [],

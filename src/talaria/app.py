@@ -16,9 +16,11 @@ from . import (
     artifact_routes,
     artifacts,
     auth,
+    branding,
     extensions,
     installation,
     metadata,
+    push,
     routes,
     session_commands,
     session_preferences,
@@ -26,6 +28,7 @@ from . import (
     transcripts,
     updates,
 )
+from .agent_presentation import DEFAULT_PRESENTATION
 from .auth_sessions import Revocations
 from .config import Settings
 from .hermes import APIError, Hermes, valid_api_key
@@ -36,6 +39,7 @@ from .proxy import PublicPath
 from .relay import Relay
 from .session_commands import CommandFollowers
 from .session_state import SessionState, StateUnavailable
+from .users import UserStore
 from .web import STATIC, Compression, SecurityHeaders, asset_routes, health, index, robots
 
 STATE_UNAVAILABLE = "Talaria could not use its saved session data. Its server log has the reason."
@@ -126,9 +130,15 @@ def create_app(
             Route("/robots.txt", robots),
             Route("/health", health),
             Route("/api/bootstrap", routes.bootstrap),
+            Route("/api/branding", branding.details),
+            Route("/api/branding/manifest", branding.manifest_route),
+            Route("/branding/manifest", branding.manifest_route),
+            Route("/branding/{path:path}", branding.asset),
             Route("/api/installation", installation.details),
             Route("/api/installation/{action}", updates.submit, methods=["POST"]),
             Route("/api/profiles", profile_listing, methods=["GET", "POST"]),
+            Route("/api/users", routes.users_listing, methods=["GET", "POST"]),
+            Route("/api/users/{user_id}", routes.user_update, methods=["PATCH"]),
             Route("/api/profiles/test", routes.connection, methods=["POST"]),
             Route("/api/profiles/{profile_id}", profile_remove, methods=["DELETE"]),
             Route("/api/login", routes.login, methods=["POST"]),
@@ -143,7 +153,12 @@ def create_app(
             ),
             Route("/api/preferences/import", session_preferences.import_choices, methods=["POST"]),
             Route("/api/agent", metadata.details),
+            Route("/api/agent/presentation", routes.agent_presentation, methods=["GET", "PATCH"]),
             Route("/api/readiness", metadata.readiness),
+            Route("/api/push/config", push.push_config),
+            Route("/api/push/subscribe", push.subscribe, methods=["POST"]),
+            Route("/api/push/unsubscribe", push.unsubscribe, methods=["POST"]),
+            Route("/push-sw.js", push.service_worker),
             Route("/api/search", session_views.view),
             Route("/api/activity", session_views.view),
             Route("/api/sessions/{session_id}/around", session_views.view),
@@ -178,6 +193,11 @@ def create_app(
     app.state.development = development
     app.state.cookie_name = auth.cookie_name(settings.base_path, development=development)
     app.state.index_html = index_html
+    app.state.users = UserStore(
+        app.state.config_path.with_name(app.state.config_path.stem + ".users.db"),
+        settings.password_hash,
+    )
+    app.state.branding = branding.load_branding(settings.branding_dir, STATIC)
     # Resolve runtime secrets separately from settings so saves never persist them.
     key = os.environ.get("TALARIA_HERMES_API_KEY") if profile_id == "default" else None
     if key is not None and (not valid_api_key(key) or len(key) > 4096):
@@ -187,12 +207,12 @@ def create_app(
     app.state.key_from_env = key is not None
     app.state.hermes_key = settings.api_key if key is None else key
     app.state.hermes = Hermes(settings.hermes_url, app.state.hermes_key, transport=transport)
-    app.state.relay = Relay(app.state.hermes)
     app.state.limiter = auth.LoginLimiter(settings.trusted_proxies)
     app.state.connection_lock = asyncio.Lock()
     app.state.capabilities = {}
     app.state.extensions = extensions.Extensions()
     app.state.profile_id = profile_id
+    app.state.profile_presentation = dict(DEFAULT_PRESENTATION)
     app.state.profiles = profiles or Profiles(app, transport)
     app.state.artifacts = artifacts.ArtifactStore(
         app.state.config_path.with_name(app.state.config_path.stem + ".artifacts.db"),
@@ -200,6 +220,12 @@ def create_app(
     )
     if profiles is not None and not hasattr(profiles, "artifacts"):
         profiles.artifacts = app.state.artifacts
+    app.state.push = push.PushStore(app.state.config_path)
+    async def notify(run_id, event):
+        await app.state.push.notify(profile_id, run_id, event)
+    app.state.relay = Relay(app.state.hermes, notifier=notify)
+    if profiles is not None and not hasattr(profiles, "push"):
+        profiles.push = app.state.push
     # One record of session activity serves every profile; rows carry the profile ID.
     app.state.session_state = (
         profiles.app.state.session_state if profiles else SessionState(config_path)

@@ -149,3 +149,21 @@ Some features require the Talaria WebUI helper plugin installed on your Hermes A
 | Custom configuration file | `talaria --config PATH` |
 
 System installations use `/var/lib/talaria`; Docker uses `/data/talaria`.
+
+### Branding packs
+
+Branding is selected through the `branding_dir` field in `config.json`. Leave it empty to use the built-in Talaria branding. A pack is a folder containing `brand.json` and the assets named by its `assets` object. See `branding/example` for a complete pack.
+
+```json
+{
+  "branding_dir": "/path/to/branding/my-brand"
+}
+```
+
+The pack can set `product_name`, `short_name`, `description`, `theme_color`, `background_color`, and logo/icon paths. `agent_name_mode` is `hermes` by default, preserving Hermes's live identity. Set it to `brand` with `agent_name` only when the displayed assistant name should come from the pack. Branding never changes Hermes configuration or stored identity.
+
+After changing the folder, restart Talaria. The browser title, login screen, sidebar, PWA manifest, favicon, install icons, settings identity, and notification fallback use the selected pack.
+
+### Multi-user access
+
+Talaria supports two roles. Administrators can manage users and access every configured Hermes profile. Normal users are assigned exactly one Hermes profile and every request is forced to that profile server-side; changing the profile query parameter cannot bypass the assignment. Existing single-password installations migrate that password to the `admin` account on first startup. User accounts and profile assignments are stored in the private `config.users.db` file. User sessions share the assigned Hermes profile, while administrators retain the existing profile selector.

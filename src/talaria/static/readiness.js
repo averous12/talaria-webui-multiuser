@@ -1,5 +1,5 @@
 import { html, useState, Icon } from "./lib.js";
-import { refreshReadiness } from "./store.js";
+import { refreshReadiness, effectiveAgent } from "./store.js";
 import { msg, t, formatNumber } from "./i18n.js";
 import { numberValue, statusLabel } from "./content.js";
 
@@ -23,12 +23,13 @@ function issueDetail(issue) {
 }
 
 export function readinessLabel(app) {
+  const name = effectiveAgent(app).name;
   if (!app.connected) return t("Connection needed");
   if (app.readiness.status === "unavailable")
-    return t("{name} unavailable", { name: app.agent.name });
+    return t("{name} unavailable", { name });
   if (app.readiness.status === "degraded")
-    return t("{name} needs attention", { name: app.agent.name });
-  return t("Connected to {name}", { name: app.agent.name });
+    return t("{name} needs attention", { name });
+  return t("Connected to {name}", { name });
 }
 export function ReadinessNotice({ app, compact = false }) {
   const [busy, setBusy] = useState(false);
