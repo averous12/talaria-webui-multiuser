@@ -653,6 +653,30 @@ def test_child_details_and_read_only_transcript(page, live_app):
     expect(page.locator(".topbar-title")).to_have_text("Design notes")
 
 
+def test_cron_session_has_scheduled_identity_and_reply_action(page, live_app):
+    peer = live_app[1]
+    sid = "c" * 32
+    peer.session_authority, peer.extension = True, {"session_fork": True}
+    peer.sessions[sid] = {"id": sid, "title": "Nightly report", "source": "cron", "pinned": False}
+    peer.messages[sid] = [
+        {"id": 1, "role": "user", "content": "Run the nightly report"},
+        {"id": 2, "role": "assistant", "content": "Report complete."},
+    ]
+    page.reload()
+    expect(page.get_by_role("link", name="Nightly report", exact=True)).to_be_visible()
+    row = page.locator(".session-row").filter(has_text="Nightly report")
+    expect(row.locator(".cron-badge")).to_have_text("Scheduled task")
+    row.get_by_role("link", name="Nightly report", exact=True).click()
+    expect(page.locator(".scheduled-marker")).to_have_text("Scheduled task")
+    expect(page.get_by_role("region", name="Scheduled task")).to_be_visible()
+    expect(
+        page.get_by_text("This conversation was created automatically by a cronjob.", exact=True)
+    ).to_be_visible()
+    expect(page.get_by_role("button", name="Reply", exact=True)).to_be_visible()
+    expect(page.get_by_label("Message Hermes")).to_have_count(0)
+    screenshot(page, "cron-scheduled-session")
+
+
 @pytest.mark.parametrize(
     "authority,plugin",
     [(False, False), (True, False), (True, True)],

@@ -608,6 +608,36 @@ async def fork(request: Request):
     return JSONResponse(object_result(result).get("session", result), status_code=201)
 
 
+async def reply(request: Request):
+    sid = identifier(request.path_params["session_id"])
+    client = request.app.state.hermes
+    source = await session_details(client, sid)
+    if source.get("source") != "cron":
+        raise APIError("Only scheduled sessions can be replied to.", 409)
+    if await has_no_messages(client, sid):
+        raise APIError(NO_HISTORY_BRANCH, 409)
+    result = await change_session(client, sid, "fork", {})
+    branch = object_result(result).get("session", result)
+    branch_id = branch.get("id") if isinstance(branch, dict) else None
+    if not isinstance(branch_id, str) or not IDENTIFIER.fullmatch(branch_id):
+        raise APIError("Hermes did not return a readable reply session.", 502)
+    verified = await session_details(client, branch_id)
+    if verified.get("id") != branch_id:
+        raise APIError("The reply session could not be verified.", 502)
+    deleted = False
+    with contextlib.suppress(APIError):
+        await client.request("DELETE", f"/api/sessions/{sid}")
+        deleted = True
+    if deleted:
+        with contextlib.suppress(StateUnavailable):
+            await asyncio.to_thread(
+                request.app.state.session_state.forget_session,
+                request.app.state.profile_id,
+                sid,
+            )
+    return JSONResponse(branch, status_code=201)
+
+
 async def start_run(request: Request):
     data = await body(request, MAX_CHAT_BODY)
     sid = identifier(text_field(data, "session_id", 256))

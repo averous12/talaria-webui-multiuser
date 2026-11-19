@@ -78,6 +78,10 @@ export function duration(v) {
         seconds: formatNumber(Math.round(v) % 60),
       });
 }
+export function isCronSession(session) {
+  return session?.source === "cron";
+}
+
 export function sourceLabel(value) {
   if (typeof value !== "string" || !value) return "";
   const names = {

@@ -742,5 +742,14 @@
   "soon": "segera",
   "{count} days": "{count} hari",
   "{count} hours": "{count} jam",
-  "Your current turn can finish, but new messages are blocked until a budget resets or an administrator changes your limit.": "Giliran saat ini dapat selesai, tetapi pesan baru diblokir sampai pemakaian direset atau administrator mengubah batasnya."
+  "Your current turn can finish, but new messages are blocked until a budget resets or an administrator changes your limit.": "Giliran saat ini dapat selesai, tetapi pesan baru diblokir sampai pemakaian direset atau administrator mengubah batasnya.",
+  "Creating reply…": "Creating reply…",
+  "Hermes did not return a readable reply session.": "Hermes did not return a readable reply session.",
+  "Hermes did not return the new reply session.": "Hermes did not return the new reply session.",
+  "Only scheduled sessions can be replied to.": "Only scheduled sessions can be replied to.",
+  "Reply": "Reply",
+  "Reply session created": "Reply session created",
+  "Scheduled task": "Scheduled task",
+  "The reply session could not be verified.": "The reply session could not be verified.",
+  "This conversation was created automatically by a cronjob.": "This conversation was created automatically by a cronjob."
 }

@@ -1,5 +1,7 @@
 import httpx
 
+from .test_app import signed_in
+
 
 def login(url, username, password):
     client = httpx.Client(base_url=url, headers={"X-Talaria-Request": "1"})
@@ -47,6 +49,37 @@ def test_regular_users_do_not_receive_hermes_readiness_alerts(live_app):
     assert "94.5" not in agent_response.text and "Model unavailable" not in agent_response.text
     admin.close()
     user.close()
+
+
+def test_cron_reply_promotes_and_deletes_source(live_app):
+    url, peer, _ = live_app
+    peer.extension = {"session_fork": True}
+    source = "a" * 32
+    peer.sessions[source] = {"id": source, "title": "Nightly report", "source": "cron"}
+    peer.messages[source] = [
+        {"id": 1, "role": "user", "content": "Run the nightly report"},
+        {"id": 2, "role": "assistant", "content": "Report complete."},
+    ]
+    with signed_in(url) as client:
+        response = client.post(f"/api/sessions/{source}/reply", json={})
+    assert response.status_code == 201
+    branch = response.json()
+    assert branch["id"] in peer.sessions
+    assert branch["parent_session_id"] == source
+    assert branch["source"] == "api_server"
+    assert source not in peer.sessions
+    assert ("DELETE", f"/api/sessions/{source}", {}) in peer.calls
+
+
+def test_cron_reply_rejects_regular_sessions(live_app):
+    url, peer, _ = live_app
+    sid = "b" * 32
+    peer.sessions[sid] = {"id": sid, "title": "Normal", "source": "api_server"}
+    peer.messages[sid] = [{"id": 1, "role": "assistant", "content": "Ready."}]
+    with signed_in(url) as client:
+        response = client.post(f"/api/sessions/{sid}/reply", json={})
+    assert response.status_code == 409
+    assert sid in peer.sessions
 
 
 def test_admin_and_user_have_separate_roles_and_sessions(live_app):

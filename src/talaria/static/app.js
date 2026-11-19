@@ -23,9 +23,11 @@ import {
   chooseReasoning,
   refreshModels,
   openSession,
+  refreshSessions,
   state,
   externalSource,
   canBranch,
+  toast,
 } from "./store.js";
 import { Sidebar } from "./sidebar.js";
 import { Conversation, hasNoChat } from "./conversation.js";
@@ -55,7 +57,7 @@ import { backgroundNotificationStatus } from "./push.js";
 import { Startup } from "./startup.js";
 import { LanguageSelector } from "./language.js";
 import { t, useLanguage } from "./i18n.js";
-import { sourceLabel } from "./content.js";
+import { sourceLabel, isCronSession } from "./content.js";
 import { BudgetWeekly } from "./budget-ui.js";
 
 export { state, update, openSession, refreshSessions } from "./store.js";
@@ -123,6 +125,43 @@ function Login({ development, branding }) {
     <div class="login-language"><${LanguageSelector} /></div>
     <p class="login-footer">${t("Hermes Agent web user interface")}</p>
   </main>`;
+}
+
+function ScheduledMarker() {
+  return html`<span class="scheduled-marker"><${Icon} name="schedule" size=${14} />${t("Scheduled task")}</span>`;
+}
+
+function ScheduledReply({ session }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function reply() {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await api(`/sessions/${encodeURIComponent(session.id)}/reply`, {
+        method: "POST",
+        body: {},
+      });
+      const id = result.id || result.session_id || result.session?.id;
+      if (!id) throw new Error(t("Hermes did not return the new reply session."));
+      await refreshSessions();
+      await openSession(id);
+      toast(t("Reply session created"));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return html`<section class="scheduled-card" aria-label=${t("Scheduled task")}>
+    <div class="scheduled-card-heading"><span class="scheduled-card-icon"><${Icon} name="schedule" size=${20} /></span>
+      <div><strong>${t("Scheduled task")}</strong><p>${t("This conversation was created automatically by a cronjob.")}</p></div>
+    </div>
+    ${error && html`<p class="form-error" role="alert">${t(error)}</p>`}
+    <button class="button primary scheduled-reply" disabled=${busy} onClick=${reply}>
+      <${Icon} name="message" size=${16} />${busy ? t("Creating reply…") : t("Reply")}
+    </button>
+  </section>`;
 }
 
 function Welcome({ app }) {
@@ -285,6 +324,7 @@ function App() {
               ? current.title || t("Untitled session")
               : t("New session")}</span
           >
+          ${app.active && isCronSession(current) && html`<${ScheduledMarker} />`}
           ${mobile &&
           app.environment === "development" &&
           html`<small class="environment-badge">${t("Dev")}</small>`}
@@ -357,9 +397,11 @@ function App() {
             </button>
           </div>`
         : external
-        ? html`<div class="child-return" role="status">
-            <span>${t("This session is managed by {source}. Hermes Agent does not accept new messages for it via API.", { source: sourceLabel(external) })}</span>
-            ${noChat
+        ? isCronSession(current)
+          ? html`<${ScheduledReply} session=${current} />`
+          : html`<div class="child-return" role="status">
+            <span>${t("This session is managed by {source}. Hermes Agent does not accept new messages for it via API.", { source: sourceLabel(external) })}</span
+            >${noChat
               ? html`<button class="text-button" onClick=${() => newConversation()}>
                   <${Icon} name="plus" size=${17} />${t("New session")}
                 </button>`

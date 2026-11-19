@@ -742,5 +742,14 @@
   "soon": "まもなく",
   "{count} days": "{count}日",
   "{count} hours": "{count}時間",
-  "Your current turn can finish, but new messages are blocked until a budget resets or an administrator changes your limit.": "現在のターンは完了できますが、予算がリセットされるか管理者が上限を変更するまで新しいメッセージはブロックされます。"
+  "Your current turn can finish, but new messages are blocked until a budget resets or an administrator changes your limit.": "現在のターンは完了できますが、予算がリセットされるか管理者が上限を変更するまで新しいメッセージはブロックされます。",
+  "Creating reply…": "Creating reply…",
+  "Hermes did not return a readable reply session.": "Hermes did not return a readable reply session.",
+  "Hermes did not return the new reply session.": "Hermes did not return the new reply session.",
+  "Only scheduled sessions can be replied to.": "Only scheduled sessions can be replied to.",
+  "Reply": "Reply",
+  "Reply session created": "Reply session created",
+  "Scheduled task": "Scheduled task",
+  "The reply session could not be verified.": "The reply session could not be verified.",
+  "This conversation was created automatically by a cronjob.": "This conversation was created automatically by a cronjob."
 }

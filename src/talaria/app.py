@@ -184,6 +184,7 @@ def create_app(
                 methods=["PUT"],
             ),
             Route("/api/sessions/{session_id}/fork", routes.fork, methods=["POST"]),
+            Route("/api/sessions/{session_id}/reply", routes.reply, methods=["POST"]),
             Route("/api/sessions/{session_id}", routes.session, methods=["GET", "PATCH", "DELETE"]),
             Route("/api/runs", routes.start_run, methods=["POST"]),
             Route("/api/runs/{run_id}/events", routes.events),

@@ -20,7 +20,7 @@ import {
 } from "./store.js";
 import { SessionSearch } from "./session-search.js";
 import { activityLabel, activityStatus } from "./session-activity.js";
-import { sourceLabel } from "./content.js";
+import { sourceLabel, isCronSession } from "./content.js";
 import { readinessLabel } from "./readiness.js";
 import { ProfileSwitch } from "./profiles.js";
 import { sessionURL } from "./session-navigation.js";
@@ -122,17 +122,19 @@ export function Sidebar({ app }) {
                     size=${13}
                     class=${`pin-icon ${working ? "live" : ""}`}
                   />`
-                  : html`<span
-                    class=${`session-dot ${working ? "live" : ""}`}
-                  ></span>`
+                  : isCronSession(session)
+                    ? html`<${Icon} name="schedule" size=${14} class="cron-icon" />`
+                    : html`<span
+                      class=${`session-dot ${working ? "live" : ""}`}
+                    ></span>`
               }<span class="session-caption"
                 >${session.title || t("Untitled session")}</span
               >${label && html`<span class=${`session-activity ${status === "needs_input" ? "needs-input" : ""}`}
                 title=${label} aria-label=${label}><${Icon} size=${13}
                   name=${status === "finished" ? "check" : working ? "context" : "alert"} /></span>`}${
                 sourceLabel(session.source) &&
-                html`<small class="source-badge" aria-hidden="true"
-                >${sourceLabel(session.source)}</small
+                html`<small class=${`source-badge ${isCronSession(session) ? "cron-badge" : ""}`} aria-hidden="true"
+                >${isCronSession(session) ? t("Scheduled task") : sourceLabel(session.source)}</small
               >`
               }
             </a>

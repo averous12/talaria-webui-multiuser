@@ -14,6 +14,32 @@
   color: var(--muted);
   font-weight: 400;
 }
+.cron-icon {
+  flex-shrink: 0;
+  color: #8067c8;
+}
+.source-badge.cron-badge,
+.scheduled-marker {
+  color: #6850a8;
+  font-weight: 550;
+}
+.source-badge.cron-badge {
+  background: #f0ecfb;
+  border-radius: 999px;
+  padding: 2px 6px;
+  max-width: 100px;
+}
+.scheduled-marker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f0ecfb;
+  font-size: 11px;
+  white-space: nowrap;
+}
 .pin-icon {
   flex-shrink: 0;
   color: var(--accent-text);
@@ -357,6 +383,48 @@
 }
 .completed-children {
   margin: 0 0 25px;
+}
+.scheduled-card {
+  max-width: 620px;
+  margin: 26px auto;
+  padding: 20px;
+  border: 1px solid #ddd5f2;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fbf9ff, #f4f0fc);
+  box-shadow: 0 5px 18px #6850a812;
+}
+.scheduled-card-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.scheduled-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  color: #6850a8;
+  background: #e9e1fb;
+  border-radius: 10px;
+}
+.scheduled-card-heading strong {
+  display: block;
+  color: #4d397e;
+  font-size: 13px;
+}
+.scheduled-card-heading p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.scheduled-reply {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 17px;
 }
 .child-return {
   display: flex;
