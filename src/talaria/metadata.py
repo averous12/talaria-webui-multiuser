@@ -2,8 +2,10 @@
 
 import asyncio
 
+from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from .auth import cookie_user_id
 from .hermes import APIError
 
 
@@ -81,7 +83,20 @@ def readiness_info(health):
     }
 
 
-async def readiness(request):
+def _regular_user(request: Request):
+    user = request.app.state.users.get(cookie_user_id(request))
+    return user if user and user["role"] == "user" else None
+
+
+def _visible_readiness(request: Request, health):
+    if _regular_user(request):
+        return {"status": "ok", "issues": []}
+    return readiness_info(health)
+
+
+async def readiness(request: Request):
+    if _regular_user(request):
+        return JSONResponse({"status": "ok", "issues": []})
     try:
         health = await request.app.state.hermes.request("GET", "/health/detailed", timeout=6)
         value = readiness_info(health)
@@ -119,7 +134,7 @@ async def details(request):
             "extended_access": extended,
             "version": text((health or {}).get("version"), 40),
             "status": text((health or {}).get("status"), 32),
-            "readiness": readiness_info(health),
+            "readiness": _visible_readiness(request, health),
             "gateway_state": text((health or {}).get("gateway_state"), 32),
             "platforms": [
                 {"name": text(name), "state": text(value.get("state"), 32)}

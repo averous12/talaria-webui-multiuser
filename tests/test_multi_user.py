@@ -9,6 +9,46 @@ def login(url, username, password):
     return client
 
 
+def test_regular_users_do_not_receive_hermes_readiness_alerts(live_app):
+    url, peer, _ = live_app
+    peer.discovery_overrides["/health/detailed"] = (
+        {
+            "status": "degraded",
+            "readiness": {
+                "status": "degraded",
+                "checks": {
+                    "disk": {"status": "degraded", "used_percent": 94.5},
+                    "model": {"status": "degraded", "detail": "Model unavailable"},
+                },
+            },
+        },
+        200,
+    )
+    admin = login(url, "admin", "test-password")
+    admin_response = admin.get("/api/readiness")
+    assert admin_response.json()["status"] == "degraded"
+    assert {issue["name"] for issue in admin_response.json()["issues"]} == {"disk", "model"}
+    created = admin.post(
+        "/api/users",
+        json={
+            "username": "quiet-user",
+            "password": "quiet-password",
+            "role": "user",
+            "profile_id": "default",
+        },
+    )
+    assert created.status_code == 201
+    user = login(url, "quiet-user", "quiet-password")
+    response = user.get("/api/readiness")
+    assert response.json() == {"status": "ok", "issues": []}
+    agent_response = user.get("/api/agent")
+    assert agent_response.json()["readiness"] == {"status": "ok", "issues": []}
+    assert "94.5" not in response.text and "Model unavailable" not in response.text
+    assert "94.5" not in agent_response.text and "Model unavailable" not in agent_response.text
+    admin.close()
+    user.close()
+
+
 def test_admin_and_user_have_separate_roles_and_sessions(live_app):
     url, _, _ = live_app
     admin = login(url, "admin", "test-password")
