@@ -27,6 +27,7 @@ from . import (
     session_views,
     transcripts,
     updates,
+    uploads,
 )
 from .agent_presentation import DEFAULT_PRESENTATION
 from .auth_sessions import Revocations
@@ -168,6 +169,7 @@ def create_app(
             Route("/api/activity", session_views.view),
             Route("/api/sessions/{session_id}/around", session_views.view),
             Route("/api/sessions", routes.sessions, methods=["GET", "POST"]),
+            Route("/api/sessions/{session_id}/upload", uploads.upload, methods=["POST"]),
             Route("/api/sessions/{session_id}/messages", routes.messages),
             Route("/api/sessions/{session_id}/artifacts", artifact_routes.fetch, methods=["POST"]),
             Route("/api/artifacts/{artifact_id}", artifact_routes.download),

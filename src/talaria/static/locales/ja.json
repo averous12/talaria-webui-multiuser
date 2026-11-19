@@ -23,7 +23,6 @@
   "Approval required": "承認が必要です",
   "Asked a question": "質問しました",
   "Asking a question": "質問中",
-  "Attach an image, or a text/code file up to 200 KB.": "画像、または200 KB以下のテキスト・コードファイルを添付してください。",
   "Attach files": "ファイルを添付",
   "Attach up to four images.": "画像は4枚まで添付できます。",
   "Attachments can be sent after this response finishes.": "この応答が完了すると添付ファイルを送信できます。",
@@ -496,7 +495,6 @@
   "The image draft could not be updated in this browser.": "このブラウザーで下書きの画像を更新できませんでした。",
   "The images could not be saved in this browser. Free some browser storage and try again.": "このブラウザーに画像を保存できませんでした。ブラウザーのストレージに空きを作って再試行してください。",
   "The initial connection cannot be removed.": "最初の接続は削除できません。",
-  "The message is too long. Remove some text before attaching another file.": "メッセージが長すぎます。テキストを減らしてから、次のファイルを添付してください。",
   "The original images are not available to resend. Your session has not been changed.": "再送信する元画像がありません。セッションは変更されていません。",
   "The response status is unavailable.": "応答の状態を取得できません。",
   "The server response could not be read.": "サーバーからの応答を読み取れませんでした。",
@@ -751,5 +749,14 @@
   "Reply session created": "Reply session created",
   "Scheduled task": "Scheduled task",
   "The reply session could not be verified.": "The reply session could not be verified.",
-  "This conversation was created automatically by a cronjob.": "This conversation was created automatically by a cronjob."
+  "This conversation was created automatically by a cronjob.": "This conversation was created automatically by a cronjob.",
+  "Choose a file.": "Choose a file.",
+  "File attachments": "File attachments",
+  "Files must be 25 MB or smaller.": "Files must be 25 MB or smaller.",
+  "Invalid file size.": "Invalid file size.",
+  "Talaria could not save this file.": "Talaria could not save this file.",
+  "That filename is not supported.": "That filename is not supported.",
+  "The file could not be uploaded.": "The file could not be uploaded.",
+  "The filename is too long.": "The filename is too long.",
+  "You can attach up to eight files per message.": "You can attach up to eight files per message."
 }

@@ -25,7 +25,6 @@
   "Approval required": "Se requiere aprobación",
   "Asked a question": "Pregunta realizada",
   "Asking a question": "Haciendo una pregunta",
-  "Attach an image, or a text/code file up to 200 KB.": "Adjunta una imagen o un archivo de texto o código de hasta 200 KB.",
   "Attach files": "Adjuntar archivos",
   "Attach up to four images.": "Adjunta hasta cuatro imágenes.",
   "Attachments can be sent after this response finishes.": "Podrás enviar archivos adjuntos cuando termine esta respuesta.",
@@ -504,7 +503,6 @@
   "The image draft could not be updated in this browser.": "No se pudo actualizar la imagen en borrador en este navegador.",
   "The images could not be saved in this browser. Free some browser storage and try again.": "No se pudieron guardar las imágenes en este navegador. Libera espacio en el almacenamiento del navegador e inténtalo de nuevo.",
   "The initial connection cannot be removed.": "No se puede eliminar la conexión inicial.",
-  "The message is too long. Remove some text before attaching another file.": "El mensaje es demasiado largo. Quita parte del texto antes de adjuntar otro archivo.",
   "The original images are not available to resend. Your session has not been changed.": "Las imágenes originales no están disponibles para reenviarlas. Tu sesión no se ha modificado.",
   "The response status is unavailable.": "El estado de la respuesta no está disponible.",
   "The server response could not be read.": "No se pudo leer la respuesta del servidor.",
@@ -777,5 +775,14 @@
   "Reply session created": "Reply session created",
   "Scheduled task": "Scheduled task",
   "The reply session could not be verified.": "The reply session could not be verified.",
-  "This conversation was created automatically by a cronjob.": "This conversation was created automatically by a cronjob."
+  "This conversation was created automatically by a cronjob.": "This conversation was created automatically by a cronjob.",
+  "Choose a file.": "Choose a file.",
+  "File attachments": "File attachments",
+  "Files must be 25 MB or smaller.": "Files must be 25 MB or smaller.",
+  "Invalid file size.": "Invalid file size.",
+  "Talaria could not save this file.": "Talaria could not save this file.",
+  "That filename is not supported.": "That filename is not supported.",
+  "The file could not be uploaded.": "The file could not be uploaded.",
+  "The filename is too long.": "The filename is too long.",
+  "You can attach up to eight files per message.": "You can attach up to eight files per message."
 }

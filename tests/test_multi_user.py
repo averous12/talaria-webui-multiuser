@@ -11,6 +11,36 @@ def login(url, username, password):
     return client
 
 
+def test_session_upload_stores_binary_file_and_metadata(live_app):
+    url, _, app = live_app
+    sid = "d" * 32
+    raw = b"\\x00\\x01binary\\xff"
+    with signed_in(url) as client:
+        response = client.post(
+            f"/api/sessions/{sid}/upload",
+            content=raw,
+            headers={
+                "X-Talaria-Filename": "report.bin",
+                "Content-Type": "application/octet-stream",
+            },
+        )
+    assert response.status_code == 201
+    metadata = response.json()
+    assert metadata["path"] == f"uploads/{sid}/report.bin"
+    stored = app.state.config_path.parent / metadata["path"]
+    assert stored.read_bytes() == raw
+    assert metadata["size"] == len(raw)
+
+
+def test_session_upload_rejects_unsafe_filename(live_app):
+    url, _, _ = live_app
+    with signed_in(url) as client:
+        response = client.post(
+            f"/api/sessions/{'e' * 32}/upload",
+            content=b"data",
+            headers={"X-Talaria-Filename": "../secret.txt", "Content-Type": "text/plain"},
+        )
+    assert response.status_code == 400
 def test_regular_users_do_not_receive_hermes_readiness_alerts(live_app):
     url, peer, _ = live_app
     peer.discovery_overrides["/health/detailed"] = (

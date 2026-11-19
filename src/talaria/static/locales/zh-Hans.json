@@ -23,7 +23,6 @@
   "Approval required": "需要授权",
   "Asked a question": "已提问",
   "Asking a question": "正在提问",
-  "Attach an image, or a text/code file up to 200 KB.": "可添加图片，或不超过 200 KB 的文本、代码文件。",
   "Attach files": "添加附件",
   "Attach up to four images.": "最多可添加四张图片。",
   "Attachments can be sent after this response finishes.": "回复完成后即可发送附件。",
@@ -496,7 +495,6 @@
   "The image draft could not be updated in this browser.": "无法在此浏览器中更新图片草稿。",
   "The images could not be saved in this browser. Free some browser storage and try again.": "无法将图片保存在此浏览器中。请释放浏览器存储空间后重试。",
   "The initial connection cannot be removed.": "无法移除初始连接。",
-  "The message is too long. Remove some text before attaching another file.": "消息过长。请删减部分文本，再添加其他文件。",
   "The original images are not available to resend. Your session has not been changed.": "原图不可用，无法重新发送。会话尚未改动。",
   "The response status is unavailable.": "回复状态不可用。",
   "The server response could not be read.": "无法解析服务器响应。",
@@ -751,5 +749,14 @@
   "Reply session created": "Reply session created",
   "Scheduled task": "Scheduled task",
   "The reply session could not be verified.": "The reply session could not be verified.",
-  "This conversation was created automatically by a cronjob.": "This conversation was created automatically by a cronjob."
+  "This conversation was created automatically by a cronjob.": "This conversation was created automatically by a cronjob.",
+  "Choose a file.": "Choose a file.",
+  "File attachments": "File attachments",
+  "Files must be 25 MB or smaller.": "Files must be 25 MB or smaller.",
+  "Invalid file size.": "Invalid file size.",
+  "Talaria could not save this file.": "Talaria could not save this file.",
+  "That filename is not supported.": "That filename is not supported.",
+  "The file could not be uploaded.": "The file could not be uploaded.",
+  "The filename is too long.": "The filename is too long.",
+  "You can attach up to eight files per message.": "You can attach up to eight files per message."
 }

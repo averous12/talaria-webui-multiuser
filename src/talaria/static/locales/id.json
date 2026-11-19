@@ -23,7 +23,6 @@
   "Approval required": "Perlu persetujuan",
   "Asked a question": "Mengajukan pertanyaan",
   "Asking a question": "Sedang bertanya",
-  "Attach an image, or a text/code file up to 200 KB.": "Lampirkan gambar atau berkas teks/kode hingga 200 KB.",
   "Attach files": "Lampirkan berkas",
   "Attach up to four images.": "Lampirkan hingga empat gambar.",
   "Attachments can be sent after this response finishes.": "Kamu bisa mengirim lampiran setelah respons ini selesai.",
@@ -496,7 +495,6 @@
   "The image draft could not be updated in this browser.": "Draf gambar tidak dapat diperbarui di browser ini.",
   "The images could not be saved in this browser. Free some browser storage and try again.": "Gambar tidak dapat disimpan di browser ini. Kosongkan ruang penyimpanan browser, lalu coba lagi.",
   "The initial connection cannot be removed.": "Koneksi awal tidak dapat dihapus.",
-  "The message is too long. Remove some text before attaching another file.": "Pesan terlalu panjang. Hapus sebagian teks sebelum melampirkan berkas lain.",
   "The original images are not available to resend. Your session has not been changed.": "Gambar asli tidak tersedia untuk dikirim ulang. Sesi kamu tidak berubah.",
   "The response status is unavailable.": "Status respons tidak tersedia.",
   "The server response could not be read.": "Respons server tidak dapat dibaca.",
@@ -751,5 +749,14 @@
   "Reply session created": "Reply session created",
   "Scheduled task": "Scheduled task",
   "The reply session could not be verified.": "The reply session could not be verified.",
-  "This conversation was created automatically by a cronjob.": "This conversation was created automatically by a cronjob."
+  "This conversation was created automatically by a cronjob.": "This conversation was created automatically by a cronjob.",
+  "Choose a file.": "Choose a file.",
+  "File attachments": "File attachments",
+  "Files must be 25 MB or smaller.": "Files must be 25 MB or smaller.",
+  "Invalid file size.": "Invalid file size.",
+  "Talaria could not save this file.": "Talaria could not save this file.",
+  "That filename is not supported.": "That filename is not supported.",
+  "The file could not be uploaded.": "The file could not be uploaded.",
+  "The filename is too long.": "The filename is too long.",
+  "You can attach up to eight files per message.": "You can attach up to eight files per message."
 }

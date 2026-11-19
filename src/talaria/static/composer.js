@@ -45,6 +45,7 @@ export function Composer({
   const [sending, setSending] = useState(false);
   const [blockedOpen, setBlockedOpen] = useState(false);
   const [images, setImages] = useState([]);
+  const [files, setFiles] = useState([]);
   const [attaching, setAttaching] = useState(false);
   const [loadingImages, setLoadingImages] = useState(true);
   const [attachmentError, setAttachmentError] = useState("");
@@ -69,9 +70,11 @@ export function Composer({
   const currentKey = useRef(key);
   const currentDraft = useRef(draft);
   const currentImages = useRef(images);
+  const currentFiles = useRef(files);
   currentKey.current = key;
   currentDraft.current = draft;
   currentImages.current = images;
+  currentFiles.current = files;
   function chooseCommand(value) {
     currentDraft.current = value;
     setDraft(value);
@@ -150,6 +153,7 @@ export function Composer({
     const submittedDraft = currentDraft.current;
     const text = submittedDraft.trim();
     const attachments = currentImages.current;
+    const fileAttachments = currentFiles.current;
     if (
       commands.busy ||
       submission.current ||
@@ -159,7 +163,7 @@ export function Composer({
       app.loading ||
       app.budget?.blocked ||
       live?.uncertain ||
-      (!text && !attachments.length)
+      (!text && !attachments.length && !fileAttachments.length)
     )
       return;
     const generation = navigationVersion();
@@ -176,6 +180,7 @@ export function Composer({
       }
       const sid = await sendMessage(text, model, {
         images: attachments,
+        files: fileAttachments,
         reasoning,
       });
       if (
@@ -185,8 +190,10 @@ export function Composer({
         // Consume the draft before unlocking, even if the DOM has not repainted.
         currentDraft.current = "";
         currentImages.current = [];
+        currentFiles.current = [];
         setDraft("");
         setImages([]);
+        setFiles([]);
         textarea.current?.focus();
       }
       // A component can be replaced while admission is pending. Consume only
@@ -223,7 +230,8 @@ export function Composer({
       const savedImages = loadingImages ? await pendingStorage(key) : images;
       const previousImages = Array.isArray(savedImages) ? savedImages : [];
       const nextImages = [...previousImages];
-      let appendedText = "";
+      const previousFiles = currentFiles.current;
+      const nextFiles = [...previousFiles];
       for (const file of files) {
         if (file.type.startsWith("image/")) {
           if (nextImages.length >= 4)
@@ -237,55 +245,22 @@ export function Composer({
               msg("Images must total no more than 6 MB. Remove an image or choose smaller files."),
             );
         } else {
-          if (
-            file.size > 200000 ||
-            !(
-              file.type.startsWith("text/") ||
-              /\.(txt|md|py|js|ts|json|csv|yaml|yml|html|css|log)$/i.test(
-                file.name,
-              )
-            )
-          )
-            throw new Error(
-              msg("Attach an image, or a text/code file up to 200 KB."),
-            );
-          const text = await file.text();
-          appendedText += `${appendedText ? "\n\n" : ""}File: ${file.name}\n\n\`\`\`\n${text}\n\`\`\``;
-          if (appendedText.length > 800000)
-            throw new Error(
-              msg("The message is too long. Remove some text before attaching another file."),
-            );
+          if (file.size > 25 * 1024 * 1024)
+            throw new Error(msg("Files must be 25 MB or smaller."));
+          if (nextFiles.length >= 8)
+            throw new Error(msg("You can attach up to eight files per message."));
+          nextFiles.push(file);
         }
       }
-      const attachedText = () => {
-        const latestText =
-          currentKey.current === key
-            ? currentDraft.current
-            : readStorage(key, draft);
-        const next =
-          latestText +
-          (appendedText ? `${latestText ? "\n\n" : ""}${appendedText}` : "");
-        if (next.length > 800000)
-          throw new Error(
-            msg("The message is too long. Remove some text before attaching another file."),
-          );
-        return next;
-      };
-      let nextText = attachedText();
-      if (nextImages.length !== previousImages.length) {
+      const nextText = currentKey.current === key ? currentDraft.current : readStorage(key, draft);
+      if (nextImages.length !== previousImages.length)
         await pendingStorage(key, nextImages);
-        try {
-          // Keep typing that arrived while browser storage was committing.
-          nextText = attachedText();
-        } catch (e) {
-          await pendingStorage(key, previousImages.length ? previousImages : null);
-          throw e;
-        }
-      }
-      if (appendedText) writeStorage(key, nextText);
       if (currentKey.current === key) {
+        currentImages.current = nextImages;
+        currentFiles.current = nextFiles;
         setImages(nextImages);
-        if (appendedText) setDraft(nextText);
+        setFiles(nextFiles);
+        if (nextText !== currentDraft.current) setDraft(nextText);
         textarea.current?.focus();
       }
     } catch (e) {
@@ -333,6 +308,14 @@ export function Composer({
     }}
   >
     ${commands.panel}
+    ${files.length > 0 &&
+    html`<div class="attachment-tray file-attachment-tray" aria-label=${t("File attachments")}>
+      ${files.map((file) => html`<div class="attachment-chip file-attachment-chip" key=${file.name}>
+        <${Icon} name="file" size=${20} /><span>${file.name}<small>${formatNumber(Math.max(1, Math.round(file.size / 1024)))} KB</small></span>
+        <${IconButton} name="close" label=${t("Remove {name}", { name: file.name })} disabled=${sending || attaching || app.loading}
+          onClick=${() => { const next = currentFiles.current.filter((item) => item !== file); currentFiles.current = next; setFiles(next); }} />
+      </div>`)}
+    </div>`}
     ${images.length > 0 &&
     html`<div class="attachment-tray" aria-label=${t("Image attachments")}>
       ${images.map(
@@ -430,7 +413,7 @@ export function Composer({
           tabindex="-1"
           aria-label=${t("File attachment")}
           multiple
-          accept="image/png,image/jpeg,image/webp,image/gif,text/*,.md,.py,.js,.ts,.json,.csv,.yaml,.yml"
+          accept="*/*"
           onChange=${(e) => {
             attach([...e.target.files]);
             e.target.value = "";

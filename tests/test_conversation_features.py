@@ -4,6 +4,7 @@ import base64
 import json
 import re
 import struct
+import time
 import zlib
 
 import httpx
@@ -651,6 +652,48 @@ def test_child_details_and_read_only_transcript(page, live_app):
     page.get_by_role("button", name="Back to parent session").click()
     expect(page.get_by_label("Message Hermes")).to_be_visible()
     expect(page.locator(".topbar-title")).to_have_text("Design notes")
+
+
+def test_non_image_attachment_is_kept_as_generic_file_chip(page, live_app):
+    page.get_by_label("File attachment").set_input_files(
+        {
+            "name": "report.bin",
+            "mimeType": "application/octet-stream",
+            "buffer": b"\\x00\\x01binary",
+        }
+    )
+    expect(page.locator(".file-attachment-chip")).to_have_count(1)
+    expect(page.locator(".file-attachment-chip")).to_contain_text("report.bin")
+    expect(page.locator(".attachment-tray").filter(has_text="report.bin")).to_be_visible()
+
+
+def test_non_image_attachment_send_injects_metadata_only(page, live_app):
+    peer = live_app[1]
+    sid = "f" * 32
+    peer.sessions[sid] = {"id": sid, "title": "Files", "source": "api_server", "pinned": False}
+    peer.messages[sid] = []
+    page.reload()
+    page.get_by_role("link", name="Files", exact=True).click()
+    wait_for_store(page, "state => state.loading === false")
+    page.get_by_label("File attachment").set_input_files(
+        {
+            "name": "report.bin",
+            "mimeType": "application/octet-stream",
+            "buffer": b"\\x00\\x01binary",
+        }
+    )
+    expect(page.locator(".file-attachment-chip")).to_be_visible()
+    page.get_by_label("Message Hermes").fill("Process this file")
+    page.get_by_role("button", name="Send message", exact=True).click()
+    deadline = time.monotonic() + 10
+    while not peer.runs and time.monotonic() < deadline:
+        time.sleep(0.05)
+    assert peer.runs
+    payload = next(iter(peer.runs.values()))
+    prompt = payload["input"]
+    assert "<talaria_system_context>" in prompt
+    assert "PATH: uploads/" in prompt and "report.bin" in prompt
+    assert "binary" not in prompt
 
 
 def test_cron_session_has_scheduled_identity_and_reply_action(page, live_app):

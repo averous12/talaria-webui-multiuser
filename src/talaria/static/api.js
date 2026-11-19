@@ -26,13 +26,44 @@ export class RequestError extends Error {
     this.code = code;
   }
 }
+
+export async function uploadFile(path, file) {
+  let response;
+  try {
+    response = await request(path, {
+      method: "POST",
+      credentials: "same-origin",
+      body: file,
+      headers: {
+        "X-Talaria-Request": "1",
+        "X-CSRF-Token": csrf,
+        "X-Talaria-Filename": encodeURIComponent(file.name),
+        "Content-Type": file.type || "application/octet-stream",
+      },
+    });
+  } catch {
+    throw new RequestError(
+      msg("Connection interrupted. Your work is still with Hermes."),
+      0,
+      "network",
+    );
+  }
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    // The error below still reports the HTTP status when a proxy returned non-JSON.
+  }
+  if (!response.ok)
+    throw new RequestError(errorMessage(data, msg("The file could not be uploaded.")), response.status, data?.code);
+  return data;
+}
+
 export async function api(path, options = {}) {
   let response;
   const safe = ["GET", "HEAD"].includes((options.method || "GET").toUpperCase());
   const body = options.body === undefined ? undefined : JSON.stringify(options.body);
   try {
-    // Only unsafe requests carry the CSRF headers the server checks. A plain read
-    // can then reuse a preloaded response, which Firefox refuses for custom headers.
     response = await request(path, {
       credentials: "same-origin",
       ...options,
@@ -45,32 +76,16 @@ export async function api(path, options = {}) {
     });
   } catch (error) {
     if (error.name === "AbortError") throw error;
-    throw new RequestError(
-      msg("Connection interrupted. Your work is still with Hermes."),
-      0,
-      "offline",
-    );
+    throw new RequestError(msg("Connection interrupted. Your work is still with Hermes."), 0, "offline");
   }
   let data;
   try {
     data = response.status === 204 ? {} : await response.json();
   } catch (error) {
     if (error.name === "AbortError") throw error;
-    // A request may reach Hermes even when its response body is lost. In
-    // particular, never acknowledge a submission by substituting an empty body.
-    if (response.ok)
-      throw new RequestError(
-        msg("The server response could not be read."),
-        0,
-        "invalid_response",
-      );
+    if (response.ok) throw new RequestError(msg("The server response could not be read."), 0, "invalid_response");
     data = {};
   }
-  if (!response.ok)
-    throw new RequestError(
-      errorMessage(data?.error),
-      response.status,
-      data?.code,
-    );
+  if (!response.ok) throw new RequestError(errorMessage(data?.error), response.status, data?.code);
   return data;
 }

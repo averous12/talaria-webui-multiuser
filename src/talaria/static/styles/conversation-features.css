@@ -4,6 +4,25 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.file-attachment-chip {
+  min-width: 180px;
+}
+.file-attachment-chip > svg {
+  flex-shrink: 0;
+  color: var(--accent-text);
+}
+.file-attachment-chip > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-attachment-chip small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 3px;
+}
 .source-badge {
   flex-shrink: 0;
   max-width: 65px;
