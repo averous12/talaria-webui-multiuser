@@ -35,6 +35,24 @@ def test_session_upload_stores_binary_file_and_metadata(live_app):
     assert metadata["size"] == len(raw)
 
 
+def test_session_upload_delete_removes_only_the_named_file(live_app):
+    url, _, _ = live_app
+    sid = "f" * 32
+    headers = {"X-Talaria-Filename": "cancel-me.bin", "Content-Type": "application/octet-stream"}
+    with signed_in(url) as client:
+        uploaded = client.post(f"/api/sessions/{sid}/upload", content=b"bytes", headers=headers)
+        assert uploaded.status_code == 201
+        path = Path(uploaded.json()["path"])
+        assert path.exists()
+        deleted = client.delete(
+            f"/api/sessions/{sid}/upload",
+            headers={"X-Talaria-Filename": "cancel-me.bin"},
+        )
+        assert deleted.status_code == 200
+        assert not path.exists()
+        assert path.parent.exists()
+
+
 def test_session_upload_rejects_unsafe_filename(live_app):
     url, _, _ = live_app
     with signed_in(url) as client:
@@ -44,6 +62,8 @@ def test_session_upload_rejects_unsafe_filename(live_app):
             headers={"X-Talaria-Filename": "../secret.txt", "Content-Type": "text/plain"},
         )
     assert response.status_code == 400
+
+
 def test_regular_users_do_not_receive_hermes_readiness_alerts(live_app):
     url, peer, _ = live_app
     peer.discovery_overrides["/health/detailed"] = (

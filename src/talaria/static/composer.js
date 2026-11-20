@@ -296,6 +296,28 @@ export function Composer({
       setAttaching(false);
     }
   }
+  async function removeFile(entry) {
+    if (operation.current || submission.current || attaching || state.loading) return;
+    operation.current = true;
+    setAttaching(true);
+    setAttachmentError("");
+    try {
+      if (entry.status === "uploaded" && entry.session_id && entry.name) {
+        await api(`/sessions/${encodeURIComponent(entry.session_id)}/upload`, {
+          method: "DELETE",
+          headers: { "X-Talaria-Filename": encodeURIComponent(entry.name) },
+        });
+      }
+      const next = currentFiles.current.filter((item) => item !== entry);
+      currentFiles.current = next;
+      if (currentKey.current === key) setFiles(next);
+    } catch (e) {
+      if (currentKey.current === key) setAttachmentError(e.message);
+    } finally {
+      operation.current = false;
+      setAttaching(false);
+    }
+  }
   async function removeImage(image) {
     if (operation.current || submission.current || loadingImages || state.loading) return;
     operation.current = true;
@@ -335,10 +357,10 @@ export function Composer({
     ${commands.panel}
     ${files.length > 0 &&
     html`<div class="attachment-tray file-attachment-tray" aria-label=${t("File attachments")}>
-      ${files.map((entry) => html`<div class="attachment-chip file-attachment-chip" key=${entry.name}>
+      ${files.map((entry) => html`<div class="attachment-chip file-attachment-chip" key=${entry.id || entry.name}>
         <${Icon} name="file" size=${20} /><span>${entry.name}<small>${entry.status === "uploaded" ? t("Uploaded") : entry.status === "error" ? t("Upload failed") : entry.status === "uploading" ? `${entry.progress}%` : t("Pending")}</small></span>
         <${IconButton} name="close" label=${t("Remove {name}", { name: entry.name })} disabled=${sending || attaching || app.loading}
-          onClick=${() => { const next = currentFiles.current.filter((item) => item !== entry); currentFiles.current = next; setFiles(next); }} />
+          onClick=${() => removeFile(entry)} />
       </div>`)}
     </div>`}
     ${images.length > 0 &&

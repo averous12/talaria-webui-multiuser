@@ -28,8 +28,25 @@ def _safe_name(value: str) -> str:
     return name
 
 
+def _delete_upload(request: Request, sid: str) -> JSONResponse:
+    filename = _safe_name(unquote(request.headers.get("x-talaria-filename", "")))
+    root = request.app.state.config_path.parent / "uploads" / sid
+    target = root / filename
+    try:
+        target.resolve().relative_to(root.resolve())
+    except ValueError as exc:
+        raise APIError("That file cannot be removed.", 400, "invalid_file") from exc
+    if not target.is_file():
+        raise APIError("Uploaded file was not found.", 404, "not_found")
+    target.unlink()
+    return JSONResponse({"deleted": True, "session_id": sid, "name": filename})
+
+
 async def upload(request: Request):
     sid = identifier(request.path_params["session_id"])
+    if request.method == "DELETE":
+        return _delete_upload(request, sid)
+
     filename = _safe_name(unquote(request.headers.get("x-talaria-filename", "")))
     content_length = request.headers.get("content-length")
     if content_length:

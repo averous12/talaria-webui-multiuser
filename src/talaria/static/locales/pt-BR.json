@@ -786,5 +786,7 @@
   "You can attach up to eight files per message.": "You can attach up to eight files per message.",
   "Pending": "Pending",
   "Upload failed": "Upload failed",
-  "Uploaded": "Uploaded"
+  "Uploaded": "Uploaded",
+  "That file cannot be removed.": "That file cannot be removed.",
+  "Uploaded file was not found.": "Uploaded file was not found."
 }
