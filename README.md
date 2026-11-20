@@ -25,7 +25,7 @@ It keeps Talaria’s lightweight Hermes interface while adding practical access 
 - Durable browser notifications with Web Push support.
 - Chrome 109 compatibility adjustments and continued localization support.
 
-The fork is maintained for personal multi-user deployments. Issues and improvements should be opened against this repository rather than the upstream project.
+The fork is maintained for personal multi-user deployments. Issues and improvements should be opened against this repository rather than the upstream project. Maintainers can start with the [maintainer guide](docs/MAINTAINERS.md) for the architecture, data ownership, security boundaries, and verification workflows.
 
 
 > [!NOTE]
