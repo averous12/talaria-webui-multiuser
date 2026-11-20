@@ -119,7 +119,10 @@ hermes gateway restart
 
 - Live streaming replies with inline reasoning and tool activity.
 - Markdown, syntax-highlighted code, and copy controls.
-- Image and text attachments.
+- Image attachments, plus up to eight non-image files per message (25 MB each).
+- Non-image files are stored unchanged under `uploads/<session-id>/` beside Talaria’s configuration file. Their metadata and absolute path are passed to Hermes; Talaria does not extract file contents.
+- Removing an uploaded file before sending deletes it from that session’s upload folder. Removing a pending file discards it locally.
+- Attachment context is hidden from the visible transcript. Treat filenames and file contents as untrusted; copy an uploaded file before processing and leave the original unchanged.
 - Stop a response or send guidance while it runs.
 
 ### Sessions
