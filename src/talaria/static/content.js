@@ -20,6 +20,19 @@ export function plainContent(content) {
     .filter(Boolean)
     .join("\n");
 }
+
+export function attachmentContext(value) {
+  const text = plainContent(value);
+  const match = text.match(/<talaria_system_context>\s*([\s\S]*?)<\/talaria_system_context>/);
+  if (!match) return { text, files: [] };
+  const block = match[1];
+  const files = [...block.matchAll(/ATTACHMENT:\s*\n\s*NAME:\s*(.*?)\s*\n\s*PATH:\s*(.*?)\s*\n\s*MIME:\s*(.*?)\s*\n\s*SIZE_BYTES:\s*(\d+)/g)]
+    .map((item) => ({ name: item[1], path: item[2], mime: item[3], size: Number(item[4]) }));
+  return { text: text.replace(match[0], "").trim(), files };
+}
+export function displayContent(value) {
+  return attachmentContext(value).text;
+}
 // Hermes stores its own events (subagent results, finished background
 // processes, resumed turns, model changes) as user-role rows of these kinds.
 // Since 0.23 a prompt the provider's safety filter refused stays on screen as

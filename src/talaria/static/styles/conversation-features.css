@@ -4,6 +4,29 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.message-file-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.message-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 260px;
+  padding: 5px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface-hover);
+  color: var(--muted);
+  font-size: 11px;
+}
+.message-file-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .file-attachment-chip {
   min-width: 180px;
 }

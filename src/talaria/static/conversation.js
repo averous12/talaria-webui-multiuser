@@ -37,7 +37,7 @@ import {
   update,
   effectiveAgent,
 } from "./store.js";
-import { guidanceText, isGuidance, isNotice, isRecoveryPrompt, plainContent, sourceLabel, userMessage } from "./content.js";
+import { guidanceText, isGuidance, isNotice, isRecoveryPrompt, plainContent, displayContent, attachmentContext, sourceLabel, userMessage } from "./content.js";
 import {
   currentImageMessage,
   messageImages,
@@ -88,6 +88,7 @@ function Message({
   canChange = false,
   canBranch = false,
   parts = null,
+  attachedFiles = [],
   responseStatus = null,
   agentName = "Hermes",
   agentIcon = "spark",
@@ -265,7 +266,12 @@ function Message({
       ><span>${agentName}</span>${time && html`<time>${humanTime(time)}</time>`}
     </div>`}
     ${role === "user"
-      ? html`<${Images} images=${images} />${text &&
+      ? html`<${Images} images=${images} />${attachedFiles.length > 0 &&
+          html`<div class="message-file-chips" aria-label=${t("File attachments")}>
+            ${attachedFiles.map((file) => html`<span class="message-file-chip" key=${file.path}>
+              <${Icon} name="file" size=${15} /><span>${file.name}</span>
+            </span>`)}
+          </div>`}${text &&
           html`<div
             class="user-content message-text"
             tabindex="0"
@@ -549,13 +555,15 @@ function historyItems(history, live, excerpt = false) {
         };
       });
       for (const tool of tools) calls.set(tool.id, tool);
+      const shownContent = attachmentContext(message.content);
       items.push({
         record: message,
         role: message.role,
         text:
           message === currentImage
             ? live.userText
-            : withoutImagePlaceholders(plainContent(message.content)),
+            : displayContent(message.content),
+        attachedFiles: shownContent.files,
         images: messageImages(
           message === currentImage
             ? { ...message, browserImages: live.userImages }
@@ -821,6 +829,7 @@ export function Conversation({ app, commands = [], onDismissCommand, noChat = fa
               (m.turnRecord || m.record).rewindable !== false}
             canBranch=${canBranch && m.role === "assistant" && m.record?.branchable === true}
             responseStatus=${m === savedTurn && !live.outcomeUnknown ? live.status : null}
+            attachedFiles=${m.attachedFiles || []}
           />`,
       ),
     [items, messageKeys, canChange, canBranch, app.loading, savedTurn, live?.status, live?.outcomeUnknown, agentName, agentIcon, app.searchWindow, locale, formatLocale],
@@ -870,6 +879,7 @@ export function Conversation({ app, commands = [], onDismissCommand, noChat = fa
       formatLocale=${formatLocale}
       text=${live.userText}
       images=${live.userImages}
+      attachedFiles=${live.attachedFiles || []}
     />`);
   if (live && !live.persisted &&
       (streaming || live.text || live.reasoning || live.tools.length))

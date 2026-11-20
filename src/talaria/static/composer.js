@@ -12,6 +12,7 @@ import {
 } from "./lib.js";
 import { useCommands } from "./commands.js";
 import { sendMessage, stopRun, running } from "./runs.js";
+import { api, uploadFile } from "./api.js";
 import { fail, supports, navigationVersion, state, update, effectiveAgent } from "./store.js";
 import {
   prepareImage,
@@ -173,14 +174,18 @@ export function Composer({
       if (await commands.submit(text, attachments)) {
         const saved = readStorage(key);
         if (currentKey.current === key && currentDraft.current === submittedDraft &&
-          (!saved || saved === submittedDraft))
-          chooseCommand("");
+          (!saved || saved === submittedDraft)) chooseCommand("");
         if (readStorage(key) === submittedDraft) writeStorage(key, "");
         return;
       }
       const sid = await sendMessage(text, model, {
         images: attachments,
         files: fileAttachments,
+        onFileStatus: (name, status) => {
+          const next = currentFiles.current.map((entry) => entry.name === name ? { ...entry, ...status } : entry);
+          currentFiles.current = next;
+          setFiles(next);
+        },
         reasoning,
       });
       if (
@@ -249,12 +254,20 @@ export function Composer({
             throw new Error(msg("Files must be 25 MB or smaller."));
           if (nextFiles.length >= 8)
             throw new Error(msg("You can attach up to eight files per message."));
-          nextFiles.push(file);
+          nextFiles.push({ file, name: file.name, size: file.size, status: "pending", progress: 0 });
         }
       }
       const nextText = currentKey.current === key ? currentDraft.current : readStorage(key, draft);
       if (nextImages.length !== previousImages.length)
         await pendingStorage(key, nextImages);
+      const newEntries = nextFiles.slice(previousFiles.length);
+      let uploadSession = state.active;
+      if (!uploadSession && newEntries.length) {
+        const result = await api("/sessions", { method: "POST", body: {} });
+        uploadSession = result.id || result.session_id || result.session?.id;
+        if (!uploadSession) throw new Error(t("Hermes did not return a session ID."));
+        update({ active: uploadSession, history: [], historyLoaded: true, loading: false });
+      }
       if (currentKey.current === key) {
         currentImages.current = nextImages;
         currentFiles.current = nextFiles;
@@ -262,6 +275,18 @@ export function Composer({
         setFiles(nextFiles);
         if (nextText !== currentDraft.current) setDraft(nextText);
         textarea.current?.focus();
+      }
+      for (const entry of newEntries) {
+        currentFiles.current = currentFiles.current.map((item) => item.name === entry.name ? { ...item, status: "uploading", progress: 0 } : item);
+        setFiles(currentFiles.current);
+        const uploaded = await uploadFile(`/sessions/${encodeURIComponent(uploadSession)}/upload`, entry.file, (progress) => {
+          const next = currentFiles.current.map((item) => item.name === entry.name ? { ...item, status: "uploading", progress } : item);
+          currentFiles.current = next;
+          setFiles(next);
+        });
+        const next = currentFiles.current.map((item) => item.name === entry.name ? { ...item, ...uploaded, status: "uploaded", progress: 100 } : item);
+        currentFiles.current = next;
+        setFiles(next);
       }
     } catch (e) {
       if (currentKey.current === key) setAttachmentError(e.message);
@@ -310,10 +335,10 @@ export function Composer({
     ${commands.panel}
     ${files.length > 0 &&
     html`<div class="attachment-tray file-attachment-tray" aria-label=${t("File attachments")}>
-      ${files.map((file) => html`<div class="attachment-chip file-attachment-chip" key=${file.name}>
-        <${Icon} name="file" size=${20} /><span>${file.name}<small>${formatNumber(Math.max(1, Math.round(file.size / 1024)))} KB</small></span>
-        <${IconButton} name="close" label=${t("Remove {name}", { name: file.name })} disabled=${sending || attaching || app.loading}
-          onClick=${() => { const next = currentFiles.current.filter((item) => item !== file); currentFiles.current = next; setFiles(next); }} />
+      ${files.map((entry) => html`<div class="attachment-chip file-attachment-chip" key=${entry.name}>
+        <${Icon} name="file" size=${20} /><span>${entry.name}<small>${entry.status === "uploaded" ? t("Uploaded") : entry.status === "error" ? t("Upload failed") : entry.status === "uploading" ? `${entry.progress}%` : t("Pending")}</small></span>
+        <${IconButton} name="close" label=${t("Remove {name}", { name: entry.name })} disabled=${sending || attaching || app.loading}
+          onClick=${() => { const next = currentFiles.current.filter((item) => item !== entry); currentFiles.current = next; setFiles(next); }} />
       </div>`)}
     </div>`}
     ${images.length > 0 &&

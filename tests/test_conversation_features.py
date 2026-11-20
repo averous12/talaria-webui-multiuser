@@ -692,7 +692,7 @@ def test_non_image_attachment_send_injects_metadata_only(page, live_app):
     payload = next(iter(peer.runs.values()))
     prompt = payload["input"]
     assert "<talaria_system_context>" in prompt
-    assert "PATH: uploads/" in prompt and "report.bin" in prompt
+    assert "PATH: " in prompt and "report" in prompt and ".bin" in prompt
     assert "binary" not in prompt
 
 

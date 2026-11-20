@@ -782,7 +782,9 @@
   "Invalid file size.": "Invalid file size.",
   "Talaria could not save this file.": "Talaria could not save this file.",
   "That filename is not supported.": "That filename is not supported.",
-  "The file could not be uploaded.": "The file could not be uploaded.",
   "The filename is too long.": "The filename is too long.",
-  "You can attach up to eight files per message.": "You can attach up to eight files per message."
+  "You can attach up to eight files per message.": "You can attach up to eight files per message.",
+  "Pending": "Pending",
+  "Upload failed": "Upload failed",
+  "Uploaded": "Uploaded"
 }

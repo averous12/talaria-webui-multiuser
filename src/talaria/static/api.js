@@ -27,36 +27,29 @@ export class RequestError extends Error {
   }
 }
 
-export async function uploadFile(path, file) {
-  let response;
-  try {
-    response = await request(path, {
-      method: "POST",
-      credentials: "same-origin",
-      body: file,
-      headers: {
-        "X-Talaria-Request": "1",
-        "X-CSRF-Token": csrf,
-        "X-Talaria-Filename": encodeURIComponent(file.name),
-        "Content-Type": file.type || "application/octet-stream",
-      },
-    });
-  } catch {
-    throw new RequestError(
-      msg("Connection interrupted. Your work is still with Hermes."),
-      0,
-      "network",
-    );
-  }
-  let data = null;
-  try {
-    data = await response.json();
-  } catch {
-    // The error below still reports the HTTP status when a proxy returned non-JSON.
-  }
-  if (!response.ok)
-    throw new RequestError(errorMessage(data, msg("The file could not be uploaded.")), response.status, data?.code);
-  return data;
+export function uploadFile(path, file, onProgress = () => {}) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", apiURL(path));
+    xhr.withCredentials = true;
+    xhr.setRequestHeader("X-Talaria-Request", "1");
+    xhr.setRequestHeader("X-CSRF-Token", csrf);
+    xhr.setRequestHeader("X-Talaria-Filename", encodeURIComponent(file.name));
+    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+    };
+    xhr.onerror = () => reject(new RequestError(msg("Connection interrupted. Your work is still with Hermes."), 0, "network"));
+    xhr.onload = () => {
+      let data = {};
+      try { data = JSON.parse(xhr.responseText); } catch { /* report status below */ }
+      if (xhr.status < 200 || xhr.status >= 300)
+        return reject(new RequestError(errorMessage(data?.error || data), xhr.status, data?.code));
+      onProgress(100);
+      resolve(data);
+    };
+    xhr.send(file);
+  });
 }
 
 export async function api(path, options = {}) {

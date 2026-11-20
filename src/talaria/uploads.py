@@ -66,7 +66,8 @@ async def upload(request: Request):
         {
             "id": secrets.token_hex(12),
             "name": target.name,
-            "path": relative,
+            "path": target.resolve().as_posix(),
+            "relative_path": relative,
             "mime": mime or "application/octet-stream",
             "size": size,
             "session_id": sid,

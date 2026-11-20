@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import httpx
 
 from .test_app import signed_in
@@ -12,7 +14,7 @@ def login(url, username, password):
 
 
 def test_session_upload_stores_binary_file_and_metadata(live_app):
-    url, _, app = live_app
+    url, _, _ = live_app
     sid = "d" * 32
     raw = b"\\x00\\x01binary\\xff"
     with signed_in(url) as client:
@@ -26,8 +28,9 @@ def test_session_upload_stores_binary_file_and_metadata(live_app):
         )
     assert response.status_code == 201
     metadata = response.json()
-    assert metadata["path"] == f"uploads/{sid}/report.bin"
-    stored = app.state.config_path.parent / metadata["path"]
+    assert metadata["path"].endswith(f"uploads/{sid}/report.bin")
+    assert metadata["path"].startswith("/") or ":/" in metadata["path"]
+    stored = Path(metadata["path"])
     assert stored.read_bytes() == raw
     assert metadata["size"] == len(raw)
 

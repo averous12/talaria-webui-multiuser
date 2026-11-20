@@ -404,7 +404,7 @@ function attachmentContext(sessionId, files) {
 export async function sendMessage(
   text,
   model = null,
-  { images = [], files = [], reasoning = "auto" } = {},
+  { images = [], files = [], reasoning = "auto", onFileStatus = () => {} } = {},
 ) {
   let sid = state.active;
   const existingSession = !!sid;
@@ -478,12 +478,28 @@ export async function sendMessage(
     }
     refreshSessions().catch(fail);
   }
-    if (files.length) {
-      const uploads = [];
-      for (const file of files) uploads.push(await uploadFile(`/sessions/${encodeURIComponent(sid)}/upload`, file));
-      text = `${text}${text ? "\n\n" : ""}${attachmentContext(sid, uploads)}`;
+  if (files.length) {
+    let uploadSession = sid;
+    if (!uploadSession) {
+      const result = await api("/sessions", { method: "POST", body: {} });
+      uploadSession = result.id || result.session_id || result.session?.id;
+      if (!uploadSession) throw new Error(msg("Hermes did not return a session ID."));
+      sid = uploadSession;
+      update({ active: sid, history: [], historyLoaded: true, loading: false });
     }
-    const requestId = randomId();
+    const uploaded = [];
+    for (const entry of files) {
+      onFileStatus?.(entry.name, { status: "uploading", progress: 0 });
+      const data = await uploadFile(`/sessions/${encodeURIComponent(sid)}/upload`, entry.file, (progress) =>
+        onFileStatus?.(entry.name, { status: "uploading", progress }));
+      uploaded.push(data);
+      onFileStatus?.(entry.name, { ...data, status: "uploaded", progress: 100 });
+    }
+    text = `${text}${text ? "\n\n" : ""}${attachmentContext(sid, uploaded)}`;
+  }
+  const requestId = randomId();
+  let liveUserText = files.length ? text.replace(/\n\n<talaria_system_context>[\s\S]*<\/talaria_system_context>$/, "").trim() : text;
+  const liveFiles = files;
   const requestedModel = model?.inherited ? null : model;
   const payload = {
     input: text,
@@ -509,7 +525,7 @@ export async function sendMessage(
   const live = {
     id: null,
     requestId,
-    userText: text,
+    userText: liveUserText,
     baseHistoryLength: history.length,
     // A full history page can retain its length after this message is saved.
     baseUserId: previousUser ? previousUser.id : null,
@@ -517,6 +533,7 @@ export async function sendMessage(
     userImages: images,
     imageBoundary,
     imageReceipt: images.length > 0,
+    attachedFiles: liveFiles,
     text: "",
     tools: [],
     status: "starting",
