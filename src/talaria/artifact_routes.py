@@ -1,6 +1,9 @@
 """Authenticated artifact fetch and download routes."""
 
 import base64
+import mimetypes
+import os
+import stat
 from pathlib import Path
 from urllib.parse import quote
 
@@ -10,6 +13,61 @@ from starlette.responses import JSONResponse, Response
 from .artifacts import MAX_ARTIFACT_BYTES
 from .hermes import APIError, identifier, object_result
 from .routes import body
+
+
+def local_artifact(raw_path: str) -> tuple[Path, bytes]:
+    """Read a regular file when Hermes refuses an external-delivery path.
+
+    Talaria and Hermes are deliberately separate trust boundaries. This fallback is
+    for the same host only: it accepts an absolute, existing regular file, rejects
+    symlinks and special files, and applies Talaria's artifact size cap. It does not
+    trust a path merely because the browser supplied it; the browser already sends
+    only paths that occur in a Hermes assistant message.
+    """
+    if not isinstance(raw_path, str) or len(raw_path) > 4096:
+        raise APIError("This file is no longer available.", 404)
+    candidate = Path(raw_path).expanduser()
+    if not candidate.is_absolute():
+        raise APIError("This file is no longer available.", 404)
+    try:
+        if candidate.is_symlink():
+            raise APIError("This file is no longer available.", 404)
+        info = candidate.stat(follow_symlinks=False)
+        if not stat.S_ISREG(info.st_mode):
+            raise APIError("This file is no longer available.", 404)
+        if info.st_size <= 0 or info.st_size > MAX_ARTIFACT_BYTES:
+            raise APIError("This file is too large to save in Talaria.", 413, "too_large")
+        flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        descriptor = os.open(candidate, flags)
+        with os.fdopen(descriptor, "rb") as file:
+            if os.fstat(file.fileno()).st_size != info.st_size:
+                raise APIError("This file is no longer available.", 404)
+            raw = file.read(MAX_ARTIFACT_BYTES + 1)
+    except APIError:
+        raise
+    except (OSError, ValueError) as exc:
+        raise APIError("This file is no longer available.", 404) from exc
+    if not raw or len(raw) > MAX_ARTIFACT_BYTES:
+        raise APIError("This file is too large to save in Talaria.", 413, "too_large")
+    return candidate, raw
+
+
+def local_response(request: Request, sid: str, message_id: int, path: str) -> JSONResponse:
+    local_path, raw = local_artifact(path)
+    name = local_path.name[:180]
+    if not name or name in {".", ".."}:
+        raise APIError("This file is no longer available.", 404)
+    mime = mimetypes.guess_type(name)[0] or "application/octet-stream"
+    artifact_id = request.app.state.artifacts.put(sid, message_id, path, name, mime[:128], raw)
+    base = request.app.state.settings.base_path
+    return JSONResponse(
+        {
+            "id": artifact_id,
+            "name": name,
+            "mime": mime,
+            "url": f"{base}/api/artifacts/{artifact_id}",
+        }
+    )
 
 
 async def fetch(request: Request):
@@ -25,12 +83,17 @@ async def fetch(request: Request):
     if cached:
         base = request.app.state.settings.base_path
         return JSONResponse({**cached, "url": f"{base}/api/artifacts/{cached['id']}"})
-    result = await request.app.state.hermes.request(
-        "GET",
-        f"/talaria/v1/sessions/{sid}/{message_id}/artifact",
-        params={"path": path},
-        timeout=20,
-    )
+    try:
+        result = await request.app.state.hermes.request(
+            "GET",
+            f"/talaria/v1/sessions/{sid}/{message_id}/artifact",
+            params={"path": path},
+            timeout=20,
+        )
+    except APIError as exc:
+        if exc.status != 403:
+            raise
+        return local_response(request, sid, message_id, path)
     result = object_result(result)
     name, mime, encoded = result.get("name"), result.get("mime"), result.get("data")
     if not all(isinstance(value, str) for value in (name, mime, encoded)):

@@ -47,6 +47,37 @@ def test_media_artifact_skeleton_becomes_download_link(page, live_app):
     assert link.get_attribute("href", timeout=5000).startswith("/api/artifacts/")
 
 
+def test_media_artifact_falls_back_when_hermes_rejects_path(page, live_app, tmp_path):
+    url, peer, _ = live_app
+    sid = "artifact-session-fallback"
+    target = tmp_path / "report.pdf"
+    target.write_bytes(b"%PDF-1.4 local fallback artifact")
+    peer.sessions[sid] = {"id": sid, "title": "Artifact", "source": "api_server", "pinned": False}
+    peer.messages[sid] = [
+        {"id": 11, "role": "user", "content": "Make a report"},
+        {"id": 12, "role": "assistant", "content": f"Here is the report:\nMEDIA:{target}"},
+    ]
+    peer.discovery_overrides[f"/talaria/v1/sessions/{sid}/12/artifact"] = (
+        {"error": "This file is not approved for delivery."},
+        403,
+    )
+    with signed_in(url) as client:
+        response = client.post(
+            f"/api/sessions/{sid}/artifacts",
+            json={"session_id": sid, "message_id": 12, "path": str(target)},
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "report.pdf"
+        assert response.json()["url"].startswith("/api/artifacts/")
+
+    page.goto(url)
+    wait_for_store(page, "s => !!s.connected")
+    page.get_by_text("Artifact", exact=True).click()
+    link = page.get_by_role("link", name="report.pdf", exact=False)
+    expect(link).to_be_visible(timeout=10000)
+    assert link.get_attribute("href", timeout=5000).startswith("/api/artifacts/")
+
+
 def test_media_image_renders_through_existing_image_viewer(page, live_app):
     url, peer, _ = live_app
     sid = "image-artifact-session"
